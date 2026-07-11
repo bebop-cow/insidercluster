@@ -158,6 +158,9 @@ def append_signals(rows, path=SIGNALS_FILE):
             writer.writerow(r)
 
     return len(new_rows)
+
+
+def score(n_insiders, total_usd):
     """Two-axis score. log10 on dollars so $10M isn't 40x a $250k signal."""
     dollar_pts = math.log10(max(total_usd, 1)) * W_DOLLARS
     insider_pts = n_insiders * W_INSIDERS
