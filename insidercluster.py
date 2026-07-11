@@ -80,7 +80,8 @@ def fetch_recent_form4(days_back=7, max_filings=100):
 def parse_form4(accession, cik):
     acc = accession.replace("-", "")
     url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{accession}.txt"
-    res = {"issuer": "?", "ticker": "?", "owner": "?", "owner_cik": cik, "buys": []}
+    res = {"issuer": "?", "ticker": "?", "owner": "?", "owner_cik": cik,
+           "accession": accession, "buys": []}
     try:
         r = requests.get(url, headers=HEADERS, timeout=20)
         if r.status_code != 200:
@@ -114,7 +115,49 @@ def parse_form4(accession, cik):
     return res
 
 
-def score(n_insiders, total_usd):
+import csv
+import os
+
+SIGNALS_FILE = "signals.csv"
+SIGNAL_FIELDS = ["date_found", "filing_accession", "ticker", "company",
+                 "signal_type", "n_insiders", "total_usd", "score"]
+
+
+def load_existing_keys(path):
+    """
+    A signal's true identity is the SEC accession number — one Form 4
+    filing = one accession number, guaranteed unique by SEC, forever.
+    Using ticker+date would falsely dedupe two different insiders
+    buying the same stock on the same day. Using accession number
+    can't collide by definition, so it's the only safe key.
+    """
+    if not os.path.exists(path):
+        return set()
+    seen = set()
+    with open(path, "r", newline="") as f:
+        for row in csv.DictReader(f):
+            seen.add(row["filing_accession"])
+    return seen
+
+
+def append_signals(rows, path=SIGNALS_FILE):
+    """
+    rows: list of dicts matching SIGNAL_FIELDS (must include
+    filing_accession per row). Appends only rows whose accession
+    number isn't already on disk. Returns count of new rows written.
+    """
+    existing = load_existing_keys(path)
+    new_rows = [r for r in rows if r["filing_accession"] not in existing]
+
+    file_exists = os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=SIGNAL_FIELDS)
+        if not file_exists:
+            writer.writeheader()
+        for r in new_rows:
+            writer.writerow(r)
+
+    return len(new_rows)
     """Two-axis score. log10 on dollars so $10M isn't 40x a $250k signal."""
     dollar_pts = math.log10(max(total_usd, 1)) * W_DOLLARS
     insider_pts = n_insiders * W_INSIDERS
@@ -146,6 +189,7 @@ def analyze(filings):
         c["ticker"] = p["ticker"]
         for b in p["buys"]:
             b["owner"] = p["owner"]
+            b["accession"] = p["accession"]
             c["owners"][p["owner_cik"]].append(b)
 
     rows = []
@@ -198,6 +242,31 @@ def main():
                 nm = buys[0]["owner"]
                 tot = sum(b["value"] for b in buys)
                 print(f"     • {nm}: ${tot:,.0f}")
+
+    # ── AUTO-LOG: persist every non-weak signal to signals.csv ──
+    today = datetime.now().strftime("%Y-%m-%d")
+    log_rows = []
+    for r in rows:
+        if r["tag"] == "·  weak":
+            continue
+        # one row per underlying filing (accession), not per company,
+        # so the identity key (accession) stays truly unique
+        for owner_cik, buys in r["owners"].items():
+            for b in buys:
+                log_rows.append({
+                    "date_found": today,
+                    "filing_accession": b["accession"],
+                    "ticker": r["ticker"],
+                    "company": r["company"],
+                    "signal_type": r["tag"].strip(),
+                    "n_insiders": r["insiders"],
+                    "total_usd": r["total"],
+                    "score": r["score"],
+                })
+
+    n_new = append_signals(log_rows)
+    print(f"\n[log] {n_new} new signal(s) appended to {SIGNALS_FILE} "
+          f"({len(log_rows) - n_new} already on file, skipped).")
 
 
 if __name__ == "__main__":
