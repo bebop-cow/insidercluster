@@ -53,6 +53,9 @@ CODE_MEANING = {
     "F": "tax", "G": "gift", "J": "other", "I": "other",
 }
 
+MIN_INSIDER_BUY = 100_000        # a single buy must clear this to "count"
+MAX_PLAUSIBLE_BUY = 500_000_000  # any single buy above this = corrupt data, reject
+
 
 def vprint(*a):
     if VERBOSE:
@@ -178,6 +181,17 @@ def tag(n_insiders, total_usd):
         return "💰 CONVICTION"  # one/few insiders, big money
     return "·  weak"
 
+def is_plausible_buy(value):
+    return value < MAX_PLAUSIBLE_BUY
+
+def counts_as_insider_buy(value):
+    return value >= MIN_INSIDER_BUY
+
+def has_conviction_buyer(buys):
+    for b in buys:
+        if counts_as_insider_buy(b["value"]):
+            return True
+    return False
 
 def analyze(filings):
     by_company = defaultdict(lambda: {"ticker": "?", "owners": defaultdict(list)})
@@ -191,6 +205,8 @@ def analyze(filings):
         c = by_company[p["issuer"]]
         c["ticker"] = p["ticker"]
         for b in p["buys"]:
+            if not is_plausible_buy(b["value"]):
+                continue   # corrupt data (JSDA $91B) never enters the system
             b["owner"] = p["owner"]
             b["accession"] = p["accession"]
             c["owners"][p["owner_cik"]].append(b)
@@ -198,6 +214,15 @@ def analyze(filings):
     rows = []
     for company, data in by_company.items():
         owners = data["owners"]
+
+        # flatten all this company's buys into one list
+        all_buys = [b for lst in owners.values() for b in lst]
+
+        # THE GATE — reason it out: no conviction buyer? skip entirely.
+        if not has_conviction_buyer(all_buys):
+            continue
+
+        # only survivors reach here — now the expensive scoring
         total = sum(b["value"] for lst in owners.values() for b in lst)
         n = len(owners)
         rows.append({
