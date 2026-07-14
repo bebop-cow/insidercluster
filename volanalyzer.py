@@ -220,9 +220,21 @@ def main():
     # For each ticker, call earnings_ramp() and show whether RV was
     # elevated around past earnings dates.
     #
-    # TODO (you): decide how to present this.
+    # TODO (you
+    print(f"\n{'='*50}")
+    print("EARNINGS VOL PATTERN (RV before vs after each print)")
+    print("=" * 50)
+    for r in rows:
+        tk = r["ticker"]
+        ticker_obj = yf.Ticker(tk)
+        price_df = flatten_columns(yf.download(tk, period="1y", progress=False))
+        ramps = earnings_ramp(ticker_obj, price_df)
+        if not ramps:
+            continue
+        print(tk)
+        for d in ramps:
+            print(f"   {d['date']}:  pre {d['rv_pre']:.1f}%  →  post {d['rv_post']:.1f}%")
 
-    print("\n(build me together)")
 
 
 if __name__ == "__main__":
