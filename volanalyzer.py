@@ -199,6 +199,22 @@ def main():
     # (ratio > ~1.2 = options rich → SELL lean; < ~1.0 = cheap → BUY lean)
     #
     # TODO (you): print a header, then a row per ticker.
+    print(f"\n{'TICKER':<7}{'SPOT':<9}{'IV%':<8}{'RV%':<8}{'IV/RV':<8}VERDICT")
+    print("-" * 50)
+    for r in rows:
+        # TODO: compute a verdict string from r["ratio"]
+        #   ratio > 1.2  → options RICH  → "SELL premium"
+        #   ratio < 1.0  → options CHEAP → "BUY premium"
+        #   in between    → "neutral"
+        if r["ratio"] > 1.2:
+            verdict = "SELL premium"
+        elif r["ratio"] < 1.0:
+            verdict = "BUY premium"
+        else:
+            verdict = "neutral"
+        
+        print(f"{r['ticker']:<7}${r['spot']:<8.2f}{r['iv']:<8.1f}"
+              f"{r['rv']:<8.1f}{r['ratio']:<8.2f}{verdict}")
 
     # ---- STEP 3 (optional): earnings ramp per ticker -----------------
     # For each ticker, call earnings_ramp() and show whether RV was
