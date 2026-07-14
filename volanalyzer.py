@@ -43,7 +43,7 @@ except ImportError:
     print("Run: pip install yfinance pandas numpy")
     sys.exit(1)
 
-DEFAULT_TICKERS = ["NVDA", "GOOGL", "ORCL", "AVGO", "TSM", "NFLX"]
+DEFAULT_TICKERS = ["NVDA", "GOOGL", "ORCL", "AVGO", "TSM", "ARM", "V"]
 
 RV_WINDOW = 30          # trading days for realized-vol calc
 TRADING_DAYS = 252      # annualization factor
