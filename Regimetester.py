@@ -145,8 +145,13 @@ def main():
     # TODO (you): build bull_next and other_next as two lists.
     bull_next = []
     other_next = []
-    # for row in df.itertuples():
-    #     ...
+    for row in df.itertuples():
+        if is_bullish_day(row.ret, threshold):
+        # today was a big up day → put tomorrow's return in bull_next
+            bull_next.append(row.next_ret)
+        else:
+        # today was not → put tomorrow's return in other_next
+            other_next.append(row.next_ret)
 
     # ---- STEP 2: also compute the baseline ---------------------------
     # baseline = ALL next-day returns, regardless of regime.
