@@ -185,9 +185,8 @@ def main():
     after_bull, after_other = split_buckets(after, threshold)
     summarize(after_bull, "big UP day [2023-2026]")
     
-    # TODO (you, once steps 1-3 work): we'll add this together.
 
-    print("\n(build me together)")
+
 
 
 if __name__ == "__main__":
