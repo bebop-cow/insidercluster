@@ -113,6 +113,18 @@ def summarize(next_rets, label):
           f"up {win:.0f}% of the time")
     return avg
 
+def split_buckets(frame, threshold):
+    bull_next = []
+    other_next = []
+    for row in frame.itertuples():
+        if is_bullish_day(row.ret, threshold):
+        # today was a big up day → put tomorrow's return in bull_next
+            bull_next.append(row.next_ret)
+        else:
+        # today was not → put tomorrow's return in other_next
+            other_next.append(row.next_ret)
+    return bull_next, other_next
+
 
 # ══════════════════════════════════════════════════════════════════════
 # MAIN — WE BUILD THIS TOGETHER. Skeleton below; you fill the logic.
@@ -143,31 +155,36 @@ def main():
     # the right bucket.
     #
     # TODO (you): build bull_next and other_next as two lists.
-    bull_next = []
-    other_next = []
-    for row in df.itertuples():
-        if is_bullish_day(row.ret, threshold):
-        # today was a big up day → put tomorrow's return in bull_next
-            bull_next.append(row.next_ret)
-        else:
-        # today was not → put tomorrow's return in other_next
-            other_next.append(row.next_ret)
+
+    
+    bull_next, other_next = split_buckets(df, threshold)
 
     # ---- STEP 2: also compute the baseline ---------------------------
     # baseline = ALL next-day returns, regardless of regime.
     # TODO (you): one line — the whole 'next_ret' column as a list.
-    all_next = []  # replace
+    all_next = df["next_ret"].tolist()  # replace
 
     # ---- STEP 3: summarize and compare -------------------------------
     print("FULL SAMPLE:")
     # TODO (you): call summarize() on all three buckets with labels like
     #   "after big UP day", "after other days", "baseline (all days)"
+    summarize(bull_next, "after big UP day")
+    summarize(other_next, "after other days")
+    summarize(all_next, "baseline(all days)")
 
     # ---- STEP 4: OUT-OF-SAMPLE check ---------------------------------
     # Split df at OOS_SPLIT_DATE. Repeat the big-up-day analysis on the
     # 'before' slice and the 'after' slice SEPARATELY. If fading only
     # works in one slice, it's noise, not edge.
-    #
+    before = df[df.index < OOS_SPLIT_DATE]
+    after  = df[df.index >= OOS_SPLIT_DATE]
+    
+    before_bull, before_other = split_buckets(before, threshold)
+    summarize(before_bull, "big UP day [2015-2022]")
+
+    after_bull, after_other = split_buckets(after, threshold)
+    summarize(after_bull, "big UP day [2023-2026]")
+    
     # TODO (you, once steps 1-3 work): we'll add this together.
 
     print("\n(build me together)")
