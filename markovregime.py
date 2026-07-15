@@ -30,3 +30,10 @@ def normalize_rows(counts):
 		else:
 			trans[i] = counts[i]/ rowsum
 	return trans
+
+def base_rates(labels):
+	"""return a length-3 array of how often each state occurs overall"""
+	states = ["down", "flat", "up"]
+	counts = np.array ([labels.count(s) for s om states])
+	return counts/ counts.sum()
+	
