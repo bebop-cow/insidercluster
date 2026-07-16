@@ -34,6 +34,17 @@ def normalize_rows(counts):
 def base_rates(labels):
 	"""return a length-3 array of how often each state occurs overall"""
 	states = ["down", "flat", "up"]
-	counts = np.array ([labels.count(s) for s om states])
+	counts = np.array ([labels.count(s) for s in states])
 	return counts/ counts.sum()
-	
+
+def markov_chain(frame, band):
+	"""glue the four functions together"""
+
+	labels = np.array ([label_state(r, band) for r in frame["ret"]])
+	counts = count_transitions(labels)
+	trans = normalize_rows(counts)
+	base = base_rates(labels)
+
+	return counts, trans, base
+
+
