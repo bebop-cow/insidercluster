@@ -79,6 +79,7 @@ def build_frame(ticker, years=10):
 	df["ret"] = df["Close"].pct_change() * 100
 	df["next_ret"] = df["ret"].shift(-1)
 	df = df.dropna()
+	df["vol"] = df["ret"].rolling(10).std()
 	return df
 
 def print_chain(ticker, trans, base):
