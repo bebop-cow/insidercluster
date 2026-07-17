@@ -1,6 +1,8 @@
 import pandas as pd
 import yfinance as yf
 
+split = "2021-01-01"
+
 def build_universe(tickers, years=10):
     end = pd.Timestamp.now()
     start = end - pd.DateOffset(years=years)
@@ -42,25 +44,56 @@ def strategy_returns(weights, rets):
     port = (weights * fwd).sum(axis=1)
     return port.dropna()
 
+def signal_reversal(rets, lookback=1):
+    # recent return over `lookback` months, then flip the sign
+    recent = (1 + rets).rolling(lookback).apply(lambda x: x.prod()) - 1
+    return -recent          # flip so losers rank highest
+
+def signal_lowvol(rets, lookback=6):
+    # trailing volatility = rolling std of returns over `lookback` months
+    vol = rets.rolling(lookback).std()
+    return -vol          # flip so lowest-vol ranks highest
+
+def score_signal(scores, rets, split_date, top_n=5):
+    # 1. keep only test-period rows (index >= split_date)
+    test_scores = scores[scores.index >= split_date]
+    test_rets   = rets[rets.index >= split_date]
+    # 2. rank → select → returns (reuse your functions)
+    ranks   = rank_scores(test_scores)
+    weights = select_portfolio(ranks,top_n)
+    port    = strategy_returns(weights,test_rets)
+    # 3. strategy total return vs buy & hold, both on the test window
+    strat = (1 + port).prod() - 1
+    hold  = (1 + test_rets.mean(axis=1)).prod() - 1
+    return strat, hold
+
+def combine_signals(signal_list):
+    # each signal: z-score it per month (row), so all are same scale
+    z = [s.sub(s.mean(axis=1), axis=0).div(s.std(axis=1), axis=0)
+         for s in signal_list]
+    # average the z-scored tables element-wise
+    combined = sum(z)/len(z)
+    return combined
+
 def main():
     tickers = ["TSLA","ARM","LLY","AAPL","GOOGL","NVDA","ORCL","META","V","GS","LEU","NKE"]
-
-    closes = build_universe(tickers ,years=10)
+    closes = build_universe(tickers)
     rets = monthly_returns(closes)
-    scores = momentum_score(rets, lookback=12, skip=1)
-    ranks = rank_scores(scores)
-    weights = select_portfolio(ranks,5)
-    port = strategy_returns(weights, rets)
 
-    strat = (1 + port).prod() - 1
-    hold = (1 + rets.mean(axis=1)).prod() - 1
+    # score each weak signal SOLO on the test window (survival check)
+    m_strat, m_hold = score_signal(momentum_score(rets), rets, split)
+    print("momentum ", round(m_strat,3), "vs hold", round(m_hold,3))
 
-    print("momentum:   ", round(strat, 3))
-    print("buy & hold: ", round(hold, 3))
+    r_strat, r_hold = score_signal(signal_reversal(rets), rets, split)
+    print("reversal ", round(r_strat,3), "vs hold", round(r_hold,3))
 
+    l_strat, l_hold = score_signal(signal_lowvol(rets), rets, split)
+    print("lowvol   ", round(l_strat,3), "vs hold", round(l_hold,3))
 
-
-        
+    # combine all three, score the blend the same way
+    combo = combine_signals([momentum_score(rets), signal_reversal(rets), signal_lowvol(rets)])
+    c_strat, c_hold = score_signal(combo, rets, split)
+    print("COMBINED ", round(c_strat,3), "vs hold", round(c_hold,3))
 
 if __name__ == "__main__":
     main()
