@@ -2,6 +2,8 @@ import sys
 import numpy as np
 import pandas as pd
 
+from hmmlearn.hmm import GaussianHMM
+
 try:
     import yfinance as yf
 except ImportError:
@@ -77,9 +79,10 @@ def build_frame(ticker, years=10):
 	df = flatten_columns(df)
 	df = df[["Close"]].copy()
 	df["ret"] = df["Close"].pct_change() * 100
+	df["vol"] = df["ret"].rolling(10).std()
 	df["next_ret"] = df["ret"].shift(-1)
 	df = df.dropna()
-	df["vol"] = df["ret"].rolling(10).std()
+
 	return df
 
 def print_chain(ticker, trans, base):
@@ -96,6 +99,30 @@ def flatten_columns(df):
 		df.columns = df.columns.get_level_values(0)
 	return df
 
+def fit_hmm(frame, n_states):
+	X = frame[["ret", "vol"]].values
+
+	model = GaussianHMM(n_components=n_states, covariance_type="full", n_iter = 200, random_state =42)
+	model.fit(X)
+
+	path = model.predict(X)
+	return model, path
+
+def describe_regimes(frame, path, n_states):
+    for s in range(n_states):                          # sequence 0..n_states-1
+        mask = path == s                          # days where path equals s
+        n = mask.sum()                             # count of True in mask
+        avgret = frame["ret"].values[mask].mean()  # mean of those
+        avgvol = frame["vol"].values[mask].mean()
+        print(s, n, round(avgret,3), round(avgvol,3))
+
+def split_by_date(frame, split_date):
+	before = frame[frame.index < split_date]
+	after = frame[frame.index > split_date]
+
+
+
+
 def main():
     for ticker in ["QQQ", "SOXX"]:
         frame = build_frame(ticker)
@@ -104,6 +131,11 @@ def main():
 
         print_chain(ticker, trans, base)
         edge_check(trans,base)
+
+        model, path = fit_hmm(frame, 2)
+        describe_regimes(frame, path, 2)
+
+        
 
 if __name__ == "__main__":
     main()
