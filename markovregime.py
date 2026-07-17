@@ -118,9 +118,20 @@ def describe_regimes(frame, path, n_states):
 
 def split_by_date(frame, split_date):
 	before = frame[frame.index < split_date]
-	after = frame[frame.index > split_date]
+	after = frame[frame.index >= split_date]
 
+	return before, after
 
+def walk_forward(frame, n_states, split_date):
+    before, after =  frame[frame.index < split_date], frame[frame.index >= split_date]                     # bug 1
+    model = GaussianHMM(n_components=n_states, covariance_type="full", n_iter = 200, random_state =42).fit(before[["ret","vol"]].values)
+    apath = model.predict(after[["ret","vol"]].values)              # bug 2: after's feature matrix
+    for s in range(n_states):
+        mask = apath == s                          # after-days where apath == s
+        avg = after["next_ret"].values[mask].mean()
+        print(s, mask.sum(), round(avg, 4))
+    base = after["next_ret"].mean()                              # mean next_ret over all after
+    print("baseline", round(base, 4))
 
 
 def main():
