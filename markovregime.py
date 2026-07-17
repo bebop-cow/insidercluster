@@ -145,6 +145,7 @@ def main():
 
         model, path = fit_hmm(frame, 2)
         describe_regimes(frame, path, 2)
+        walk_forward(frame, 2, "2023-01-01")
 
         
 
