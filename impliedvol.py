@@ -16,8 +16,15 @@ def move_range(S, iv, days, n_sigma):
 
 def main():
 
-	expected = expected_move(S, iv, days)
-	ranges = move_range(S, iv, days, n_sigma)
+	S = 396
+	iv = 0.40
+	days = 5
+
+	low1, high1 = move_range(S, iv, days, 1)
+	low2, high2 = move_range(S, iv, days, 2)
+	print(f"stock {S}, IV {iv}, {days} days")
+	print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
+	print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
 
 if __name__ == "__main__":
     main()
