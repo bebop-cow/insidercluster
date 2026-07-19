@@ -75,12 +75,37 @@ def combine_signals(signal_list):
     combined = sum(z)/len(z)
     return combined
 
+def signal_weights(solo_scores):
+    # solo_scores: dict like {"momentum": (strat, hold), ...}
+    edges = {}
+    for name, (strat, hold) in solo_scores.items():
+        edge = strat - hold          # how much it beat buy & hold
+        edges[name] = max(edge, 0)       # keep only if positive, else 0
+    total = sum(edges.values())
+    # normalize to weights that sum to 1 (guard divide-by-zero)
+    if total == 0:
+        return edges
+    return {name: e / total for name, e in edges.items()}
+
+def combine_weighted(signal_dict, weights):
+    # signal_dict: {"momentum": score_table, ...}, weights: {"momentum": 0.4, ...}
+    total = None
+    for name, table in signal_dict.items():
+        # z-score this table per month (row) — same as before
+        z = table.sub(table.mean(axis=1), axis=0).div(table.std(axis=1), axis=0)
+        contribution = z * weights[name]        # scale by its weight
+        total = contribution if total is None else total + contribution
+    return total
+
 def main():
     tickers = ["TSLA","ARM","LLY","AAPL","GOOGL","NVDA","ORCL","META","V","GS","LEU","NKE"]
+ 
+    
+
     closes = build_universe(tickers)
     rets = monthly_returns(closes)
 
-    # score each weak signal SOLO on the test window (survival check)
+    # score each solo FIRST
     m_strat, m_hold = score_signal(momentum_score(rets), rets, split)
     print("momentum ", round(m_strat,3), "vs hold", round(m_hold,3))
 
@@ -90,10 +115,26 @@ def main():
     l_strat, l_hold = score_signal(signal_lowvol(rets), rets, split)
     print("lowvol   ", round(l_strat,3), "vs hold", round(l_hold,3))
 
-    # combine all three, score the blend the same way
+    # NOW build weights from those scores
+    solos = {"momentum": (m_strat, m_hold),
+             "reversal": (r_strat, r_hold),
+             "lowvol":   (l_strat, l_hold)}
+    w = signal_weights(solos)
+    print("weights:", {k: round(v,2) for k,v in w.items()})
+
+    # equal-weight combo (for comparison)
     combo = combine_signals([momentum_score(rets), signal_reversal(rets), signal_lowvol(rets)])
     c_strat, c_hold = score_signal(combo, rets, split)
     print("COMBINED ", round(c_strat,3), "vs hold", round(c_hold,3))
+
+    # weighted combo
+    sig_tables = {"momentum": momentum_score(rets),
+                  "reversal": signal_reversal(rets),
+                  "lowvol":   signal_lowvol(rets)}
+    wcombo = combine_weighted(sig_tables, w)
+    wc_strat, wc_hold = score_signal(wcombo, rets, split)
+    print("WEIGHTED ", round(wc_strat,3), "vs hold", round(wc_hold,3))
+
 
 if __name__ == "__main__":
     main()
