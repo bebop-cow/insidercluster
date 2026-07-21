@@ -14,17 +14,30 @@ def move_range(S, iv, days, n_sigma):
 
 	return lowerprice, upperprice
 
+#strike picker mode
+def sigma_distance(S, iv, days, strike):
+	onesigma = expected_move(S, iv, days)
+	nosigma = (strike - S) / onesigma
+	return nosigma
+
+	def prob_above(S, iv, days, strike):
+    z = sigma_distance(S, iv, days, strike)
+    cdf = 0.5 * (1 + math.erf(z / math.sqrt(2)))   # P(finish below strike)
+    return 1 - cdf            
+
+#Live IV
+
+
+#Payoff overlay
+
+
 def main():
 
-	S = 503
-	iv = 1.17
-	days = 2
-
-	low1, high1 = move_range(S, iv, days, 1)
-	low2, high2 = move_range(S, iv, days, 2)
-	print(f"stock {S}, IV {iv}, {days} days")
-	print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
-	print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
+	strike = 402.5
+    z = sigma_distance(S, iv, days, strike)
+    p = prob_above(S, iv, days, strike)
+    print(f"strike {strike}: {z:+.2f}σ away, {p*100:.1f}% chance above")
 
 if __name__ == "__main__":
+
     main()
