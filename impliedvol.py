@@ -27,32 +27,33 @@ def prob_above(S, iv, days, strike):
 
 #Live IV
 def get_atm_iv(ticker, expiry_index=0):
-	tk = yf.Ticker(ticker)
-	expiry = tk.options[expiry_index]                       # the expiry string at expiry_index
-	chain = tk.option_chain(expiry)       # pull that expiry's chain
-	calls = chain.calls                  # the calls DataFrame
-	return calls["impliedVolatility"].median()
-
+    tk = yf.Ticker(ticker)
+    expiry = tk.options[expiry_index]
+    chain = tk.option_chain(expiry)
+    calls = chain.calls
+    spot = tk.history(period="1d")["Close"].iloc[-1]
+    nearest = (calls["strike"] - spot).abs().idxmin()   # index of closest strike
+    return calls.loc[nearest, "impliedVolatility"]          # that row's IV
 
 #Payoff overlay
 
 
 def main():
-	S = 396
-	iv = 0.40
-	days = 5
-	low1, high1 = move_range(S, iv, days, 1)
-	low2, high2 = move_range(S, iv, days, 2)
-	print(f"stock {S}, IV {iv}, {days} days")
-	print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
-	print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
+    ticker = "TSLA"
+    S = 396          # (or pull live — we can do that next)
+    days = 5
+    iv = get_atm_iv(ticker, 0)          # real ATM IV, nearest expiry
+    print(f"{ticker} live ATM IV: {iv:.4f}")
 
+    low1, high1 = move_range(S, iv, days, 1)
+    low2, high2 = move_range(S, iv, days, 2)
+    print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
+    print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
 
-	strike = 402.5
-	z = sigma_distance(S, iv, days, strike)
-	p = prob_above(S, iv, days, strike)
-	print(f"strike {strike}: {z:+.2f}σ away, {p*100:.1f}% chance above")
+    strike = 402.5
+    z = sigma_distance(S, iv, days, strike)
+    p = prob_above(S, iv, days, strike)
+    print(f"strike {strike}: {z:+.2f}σ, {p*100:.1f}% above")
 
 if __name__ == "__main__":
-
     main()
