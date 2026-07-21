@@ -16,9 +16,9 @@ def move_range(S, iv, days, n_sigma):
 
 def main():
 
-	S = 396
-	iv = 0.40
-	days = 5
+	S = 503
+	iv = 1.17
+	days = 2
 
 	low1, high1 = move_range(S, iv, days, 1)
 	low2, high2 = move_range(S, iv, days, 2)
