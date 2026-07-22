@@ -35,13 +35,16 @@ def get_atm_iv(ticker, expiry_index=0):
     nearest = (calls["strike"] - spot).abs().idxmin()   # index of closest strike
     return calls.loc[nearest, "impliedVolatility"]          # that row's IV
 
-#Payoff overlay
-
+def get_spot(ticker):
+	tk = yf.Ticker(ticker)
+	last_close = tk.history(period="1d")["Close"].iloc[-1]
+	return last_close
 
 def main():
-    ticker = "TSLA"
-    S = 396          # (or pull live — we can do that next)
-    days = 5
+	ticker = input("Ticker: ").strip().upper()
+	S = get_spot(ticker)          # (or pull live — we can do that next)
+    days = int(input("Days to expiry: "))
+    strike = float(input("Strike: "))
     iv = get_atm_iv(ticker, 0)          # real ATM IV, nearest expiry
     print(f"{ticker} live ATM IV: {iv:.4f}")
 
