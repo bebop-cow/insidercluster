@@ -40,23 +40,29 @@ def get_spot(ticker):
 	last_close = tk.history(period="1d")["Close"].iloc[-1]
 	return last_close
 
+def realized_vol_history(ticker, window=30):
+	tk = yf.Ticker(ticker)
+	closes = tk.history(period="1y")["Close"]
+	rets = closes.pct_change()
+	rv = rets.rolling(window).std() * (252 ** 0.5)
+	return rv.dropna()
+
 def main():
 	ticker = input("Ticker: ").strip().upper()
 	S = get_spot(ticker)          # (or pull live — we can do that next)
-    days = int(input("Days to expiry: "))
-    strike = float(input("Strike: "))
-    iv = get_atm_iv(ticker, 0)          # real ATM IV, nearest expiry
-    print(f"{ticker} live ATM IV: {iv:.4f}")
+	days = int(input("Days to expiry: "))
+	strike = float(input("Strike: "))
+	iv = get_atm_iv(ticker, 0)          # real ATM IV, nearest expiry
+	print(f"{ticker} live ATM IV: {iv:.4f}")
 
-    low1, high1 = move_range(S, iv, days, 1)
-    low2, high2 = move_range(S, iv, days, 2)
-    print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
-    print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
+	low1, high1 = move_range(S, iv, days, 1)
+	low2, high2 = move_range(S, iv, days, 2)
+	print(f"1σ (68%): {low1:.2f} to {high1:.2f}")
+	print(f"2σ (95%): {low2:.2f} to {high2:.2f}")
 
-    strike = 402.5
-    z = sigma_distance(S, iv, days, strike)
-    p = prob_above(S, iv, days, strike)
-    print(f"strike {strike}: {z:+.2f}σ, {p*100:.1f}% above")
+	z = sigma_distance(S, iv, days, strike)
+	p = prob_above(S, iv, days, strike)
+	print(f"strike {strike}: {z:+.2f}σ, {p*100:.1f}% above")
 
 if __name__ == "__main__":
     main()
