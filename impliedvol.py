@@ -54,6 +54,14 @@ def iv_rank(current_iv, rv_history):
         return 0.5
     return (current_iv - lo) / (hi - lo)
 
+def next_earnings(ticker):
+    tk = yf.Ticker(ticker)
+    try:
+        dates = tk.calendar["Earnings Date"]
+        return dates[0] if dates else None
+    except Exception:
+        return None
+
 def main():
 	ticker = input("Ticker: ").strip().upper()
 	S = get_spot(ticker)          # (or pull live — we can do that next)
