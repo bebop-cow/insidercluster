@@ -47,6 +47,13 @@ def realized_vol_history(ticker, window=30):
 	rv = rets.rolling(window).std() * (252 ** 0.5)
 	return rv.dropna()
 
+def iv_rank(current_iv, rv_history):
+    lo = rv_history.min()
+    hi = rv_history.max()
+    if hi == lo:
+        return 0.5
+    return (current_iv - lo) / (hi - lo)
+
 def main():
 	ticker = input("Ticker: ").strip().upper()
 	S = get_spot(ticker)          # (or pull live — we can do that next)
@@ -63,6 +70,10 @@ def main():
 	z = sigma_distance(S, iv, days, strike)
 	p = prob_above(S, iv, days, strike)
 	print(f"strike {strike}: {z:+.2f}σ, {p*100:.1f}% above")
+
+	rv_hist = realized_vol_history(ticker)
+	rank = iv_rank(iv, rv_hist)
+	print(f"IV rank: {rank:.2f}  (0=cheap, 1=expensive vs 1yr realized)")
 
 if __name__ == "__main__":
     main()
