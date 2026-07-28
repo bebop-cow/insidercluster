@@ -1,5 +1,6 @@
 import math
 import yfinance as yf
+from datetime import date, timedelta
 
 def expected_move(S, iv, days):
 	T = days/365
@@ -82,6 +83,14 @@ def main():
 	rv_hist = realized_vol_history(ticker)
 	rank = iv_rank(iv, rv_hist)
 	print(f"IV rank: {rank:.2f}  (0=cheap, 1=expensive vs 1yr realized)")
+
+	earnings = next_earnings(ticker)
+	if earnings is None:
+		print("earnings date: unavailable")
+	elif earnings <= date.today() + timedelta(days=days):
+		print(f"⚠️  EARNINGS {earnings} — inside your {days}d window, IV is inflated")
+	else:
+		print(f"earnings {earnings} — outside window")
 
 if __name__ == "__main__":
     main()
