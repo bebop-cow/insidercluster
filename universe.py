@@ -99,8 +99,7 @@ def combine_weighted(signal_dict, weights):
 
 def main():
     tickers = ["TSLA","ARM","LLY","AAPL","GOOGL","NVDA","ORCL","META","V","GS","LEU","NKE"]
- 
-    
+     
 
     closes = build_universe(tickers)
     rets = monthly_returns(closes)
