@@ -90,6 +90,11 @@ def reaction(ticker, event_date, days=7):
 	return (close_later /  close_release - 1) * 100
 
 def main():
+
+	buckets = {"hotter": {"SPY": [], "QQQ": [], "SOXX": []},
+				"cooler": {"SPY": [], "QQQ": [], "SOXX": []},
+				"inline": {"SPY": [], "QQQ": [], "SOXX": []}}
+
 	for date, actual, consenses in EVENTS:
 		reading = surprise(actual, consenses)
 		expectation = bucket(reading)
@@ -97,10 +102,22 @@ def main():
 
 		for tk in tickers:
 			r = reaction(tk, date, 7)
+			if r is not None:
+				buckets[expectation][tk].append(r)
 			if r is None:
 				priint (f" {tk}: No data")
 			else:
 				print(f" {tk}: {r:+.2f}% over 7 days")
+
+	for buck in ["hotter", "cooler", "inline"]:
+        for tk in ["SPY", "QQQ", "SOXX"]:
+            vals = buckets[buck][tk]
+            # average if non-empty, print buck, tk, mean, count
+			if not vals:
+            	continue
+			combined = sum(vals)/len(vals)
+			count = len(vals)
+			print(f"{buck:7} {tk:5} avg {combined:+.2f}%  (n={count})")
 
 
 if __name__ == '__main__':
