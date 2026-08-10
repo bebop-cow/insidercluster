@@ -8,16 +8,16 @@ except ImportError:
 
 EVENTS = [
     # date       actual  consensus
-    ("2025-06-13", 0.6, 0.6)
-    ("2025-06-21", 0.5, 0.6)
-    ("2026-02-28", -0.3, -0.3)
-    ("2026-03-06", 0.2, 0.1)
-    ("2026-03-21", 0.1, 0.1)
-    ("2026-05-25", -0.1, -0.2)
-    ("2026-06-11", 0.2, 0.1)
+    ("2025-06-13", 0.6, 0.6),
+    ("2025-06-21", 0.5, 0.6),
+    ("2026-02-28", -0.3, -0.3),
+    ("2026-03-06", 0.2, 0.1),
+    ("2026-03-21", 0.1, 0.1),
+    ("2026-05-25", -0.1, -0.2),
+    ("2026-06-11", 0.2, 0.1),
 ]
 
-tickers = [SPY, QQQ, SOXX]
+tickers = ["SPY", "QQQ", "SOXX"]
 
 
 def surprise(actual, consenses):
@@ -39,6 +39,8 @@ def reaction(ticker, event_date, days=7):
 		end=end, progress=False)
 	if data.empty:
 		return None
+	if isinstance(data.columns, pd.MultiIndex):      # flatten multi-level cols
+		data.columns = data.columns.get_level_values(0)
 	closes = data["Close"]
 	idx = closes.index
 
