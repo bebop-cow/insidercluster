@@ -13,10 +13,11 @@ EVENTS = [
     ("2026-02-28", -0.3, -0.3)
     ("2026-03-06", 0.2, 0.1)
     ("2026-03-21", 0.1, 0.1)
-    ("2026-05-25", -0.1, 0.2)
+    ("2026-05-25", -0.1, -0.2)
     ("2026-06-11", 0.2, 0.1)
-
 ]
+
+tickers = [SPY, QQQ, SOXX]
 
 
 def surprise(actual, consenses):
@@ -58,4 +59,21 @@ def reaction(ticker, event_date, days=7):
 
 	return (close_later /  close_release - 1) * 100
 
-	def main():
+def main():
+	for date, actual, consenses in EVENTS:
+		reading = surprise(actual, consenses)
+		expectation = bucket(reading)
+		print(f"\n{date}: surprise {reading:+.2f}pp ({expectation})")
+
+		for tk in tickers:
+			r = reaction(tk, date, 7)
+			if r is None:
+				priint (f" {tk}: No data")
+			else:
+				print(f" {tk}: {r:+.2f}% over 7 days")
+
+
+if __name__ == '__main__':
+	main()
+
+
