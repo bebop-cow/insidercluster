@@ -98,23 +98,23 @@ def main():
 	for date, actual, consenses in EVENTS:
 		reading = surprise(actual, consenses)
 		expectation = bucket(reading)
-		print(f"\n{date}: surprise {reading:+.2f}pp ({expectation})")
+		# print(f"\n{date}: surprise {reading:+.2f}pp ({expectation})")
 
 		for tk in tickers:
-			r = reaction(tk, date, 7)
+			r = reaction(tk, date, 1)
 			if r is not None:
 				buckets[expectation][tk].append(r)
-			if r is None:
-				priint (f" {tk}: No data")
-			else:
-				print(f" {tk}: {r:+.2f}% over 7 days")
+			# if r is None:
+			# 	print (f" {tk}: No data")
+			# else:
+			# 	print(f" {tk}: {r:+.2f}% over 7 days")
 
 	for buck in ["hotter", "cooler", "inline"]:
-        for tk in ["SPY", "QQQ", "SOXX"]:
-            vals = buckets[buck][tk]
+		for tk in ["SPY", "QQQ", "SOXX"]:
+			vals = buckets[buck][tk]
             # average if non-empty, print buck, tk, mean, count
 			if not vals:
-            	continue
+				continue
 			combined = sum(vals)/len(vals)
 			count = len(vals)
 			print(f"{buck:7} {tk:5} avg {combined:+.2f}%  (n={count})")
