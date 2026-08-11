@@ -40,6 +40,35 @@ EVENTS = [
 ]
 
 def nearest_cpi(earnings_date, cpi_dates):
-	for dates in cpi_dates:
-		gap = (pd.Timestamp(cpi) - pd.Timestamp(earnings_date)).dates
-		return pd.Timestamp(cpi), abs(gap)
+	best_cpi = None
+	best_gap = None
+	for cpi in cpi_dates:
+		gap = (pd.Timestamp(cpi) - pd.Timestamp(earnings_date)).days
+		if best_gap is None or abs(gap) < abs(best_gap):
+			best_cpi = cpi
+			best_gap = gap
+	return best_cpi, best_gap
+
+def classify_timing(gap):
+	if gap < -3:
+		return "CPI week before"
+	elif gap > 3:
+		return "CPI week after"
+	else:
+		return "same week"
+
+def main():
+	EARNINGS = {
+    "AMD": ["2026-08-04", "2026-05-05", "2026-02-03", "2025-11-04"],
+    "NVO": ["2026-08-04", "2026-05-05", "2026-02-03", "2025-11-05"],
+}
+
+	for ticker in EARNINGS:
+		print(f"\n{ticker}")
+		for ed in EARNINGS[ticker]:
+			cpi, gap = nearest_cpi(ed,EVENTS)
+			timing = classify_timing(gap)
+			print(f"  earnings {ed}  nearest CPI {cpi}  gap {gap:+d}d  → {timing}")
+
+if __name__ == '__main__':
+	main()
