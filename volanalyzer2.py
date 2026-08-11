@@ -152,6 +152,15 @@ def earnings_ramp(ticker_obj, price_df):
         pass
     return results
 
+def pick_expiry(tk, min_days=3):
+    for exp in tk.options:
+        days_to_expiry = (pd.Timestamp(exp) - pd.Timestamp.now()).days
+        if days_to_expiry >= min_days:
+            return exp
+    return tk.options[-1]
+        
+        
+
 
 # ══════════════════════════════════════════════════════════════════════
 # MAIN — WE BUILD THIS TOGETHER. Skeleton below; you fill the logic.
