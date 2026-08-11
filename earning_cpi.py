@@ -2,6 +2,7 @@ import pandas as pd
 
 EVENTS = [
     # date        actual  expected   (index levels; surprise in comment)
+    ("2026-08-10", 334.95, 334.54),
     ("2026-07-14", 333.95, 334.70),   # -0.224pp cool
     ("2026-06-10", 335.12, 335.11),   # +0.003pp hot
     ("2026-04-10", 330.21, 330.41),   # -0.061pp cool
@@ -66,7 +67,8 @@ def main():
 	for ticker in EARNINGS:
 		print(f"\n{ticker}")
 		for ed in EARNINGS[ticker]:
-			cpi, gap = nearest_cpi(ed,EVENTS)
+			CPI_DATES = [e[0] for e in EVENTS]
+			cpi, gap = nearest_cpi(ed,CPI_DATES)
 			timing = classify_timing(gap)
 			print(f"  earnings {ed}  nearest CPI {cpi}  gap {gap:+d}d  → {timing}")
 
