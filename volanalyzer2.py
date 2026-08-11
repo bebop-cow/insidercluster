@@ -98,10 +98,7 @@ def current_atm_iv(ticker_obj, spot):
     Returns a percent (42.0) or None.
     """
     try:
-        expiries = ticker_obj.options
-        if not expiries:
-            return None
-        chain = ticker_obj.option_chain(expiries[0])   # nearest expiry
+        chain = ticker_obj.option_chain(pick_expiry(ticker_obj,5))   # nearest expiry
         calls = chain.calls
         if calls.empty:
             return None
@@ -114,7 +111,7 @@ def current_atm_iv(ticker_obj, spot):
             return None
         return float(iv * 100)
     except Exception as e:
-        return None
+        print("IV error:", e); return None
 
 
 # ── earnings ramp: RV before vs after each past earnings date ─────────
