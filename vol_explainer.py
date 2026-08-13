@@ -23,7 +23,7 @@ def flatten_columns(df):
 
 def flag_outliers(ticker, sigma=2.0, top_n=10):
 	end = pd.Timestamp.now()
-	start = end - pd.DateOffset(years=2)
+	start = end - pd.DateOffset(years=1)
 	
 	df = yf.download(ticker, start=start.strftime("%Y-%m-%d"),
 		end=end.strftime("%Y-%m-%d"), progress=False)
