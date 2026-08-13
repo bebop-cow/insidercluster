@@ -1,4 +1,5 @@
 import sys
+import pandas as pd
 
 try:
     import yfinance as yf
@@ -7,6 +8,11 @@ except ImportError:
     sys.exit(1)
 
 DEFAULT_TICKER = "SPY"
+
+def flatten_columns(df):
+	if isinstance(df.columns, pd.MultiIndex):
+		df.columns = df.columns.get_level_values(0)
+	return df
 
 def flag_outliers(ticker, sigma=2.0, top_n=10):
 	end = pd.Timestamp.now()
