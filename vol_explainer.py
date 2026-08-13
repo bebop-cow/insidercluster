@@ -1,11 +1,18 @@
 import sys
+import requests
 import pandas as pd
+import os
+
+from dotenv import load_dotenv
+load_dotenv()          # reads .env into environment
+API_KEY = os.environ.get("FINNHUB_KEY")
 
 try:
     import yfinance as yf
 except ImportError:
     print("Run: pip install yfinance pandas numpy")
     sys.exit(1)
+
 
 DEFAULT_TICKER = "SPY"
 
@@ -48,6 +55,21 @@ def get_news(ticker, limit=5):
 	except Exception:
 		return []
 
+def news_for_date(ticker, date, api_key, limit=3):
+	try:
+		url = f"https://finnhub.io/api/v1/company-news?symbol={ticker}&from={date}&to={date}&token={api_key}"
+		r = requests.get(url)
+		data = r.json()
+		out = []
+		for item in data[:limit]:
+			out.append(item["headline"])
+		return out
+
+	except Exception:
+		return []
+	
+
+
 def main():
 
 	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
@@ -56,8 +78,15 @@ def main():
 	print(outlier[["Close", "ret"]])
 
 	print(f"\n recent news:")
-	for date, title in get_news(ticker):
-		print(f" {date} {title}")
+	for date in outlier.index:
+		ds = date.strftime("%Y-%m-%d")
+		move = outlier.loc[date, "ret"]
+		print(f"\n{ds}  {move:+.2f}%")
+		heads = news_for_date(ticker, ds, API_KEY)
+		if not heads:
+			print("   (no news — outside free-tier history)")
+		for h in heads:
+			print(f"   · {h}")
 
 if __name__ == '__main__':
 	main()
