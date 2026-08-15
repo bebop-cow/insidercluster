@@ -55,7 +55,7 @@ def get_news(ticker, limit=5):
 	except Exception:
 		return []
 
-def news_for_date(ticker, date, api_key, limit=3):
+def news_for_date(ticker, date, api_key, limit=6):
 	try:
 		url = f"https://finnhub.io/api/v1/company-news?symbol={ticker}&from={date}&to={date}&token={api_key}"
 		r = requests.get(url)
@@ -67,22 +67,38 @@ def news_for_date(ticker, date, api_key, limit=3):
 
 	except Exception:
 		return []
+
+def rank_headlines(headlines, ticker, company):
+	score = lambda h: 1 if (ticker.lower() in h.lower() or company.lower() in h.lower()) else 0 
+	return sorted(headlines, key=score, reverse=True)
+
+def score(h):
+    hl = h.lower()
+    s = 0
+    if ticker.lower() in hl or company.lower() in hl:
+        s += 2
+    if any(w in hl for w in ["why", "soar", "jump", "plunge", "downgrade", "upgrade", "earnings", "fda", "approv"]):
+        s += 1
+    if "recap" in hl or "roundup" in hl or "stocks to watch" in hl:
+        s -= 1        # penalize list articles
+    return s
 	
-
-
 def main():
 
 	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
 	outlier = flag_outliers(ticker)
 	print(f"\n{ticker} - biggest moves:")
 	print(outlier[["Close", "ret"]])
+	COMPANIES = {"LLY": "Eli Lilly", "NVO": "Novo Nordisk", "AMD": "AMD", "SPY": "S&P"}
+	COMPANY = COMPANIES.get(ticker, ticker) 
 
-	print(f"\n recent news:")
+	
 	for date in outlier.index:
 		ds = date.strftime("%Y-%m-%d")
 		move = outlier.loc[date, "ret"]
 		print(f"\n{ds}  {move:+.2f}%")
 		heads = news_for_date(ticker, ds, API_KEY)
+		heads = rank_headlines(heads, ticker, COMPANY)
 		if not heads:
 			print("   (no news — outside free-tier history)")
 		for h in heads:
