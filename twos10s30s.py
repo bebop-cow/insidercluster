@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def fetch_series(series_id):
 	url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
 	df = pd.read_csv(url, parse_dates=["observation_date"], index_col = "observation_date")
@@ -9,7 +12,7 @@ def build_curve():
 	teny = fetch_series("DGS10")
 	thirtyy = fetch_series("DGS30")
 
-	df = pd.concat([twoy, teny, thirtyy], axis=1)
+	df = pd.concat([twoy, teny, thirtyy], axis=1, sort=True)
 	df.columns = ["2Y", "10Y", "30Y"]
 	return df.dropna()
 
