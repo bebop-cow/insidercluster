@@ -108,15 +108,14 @@ def reaction(ticker, event_date, days=7):
 
 	return (close_later /  close_release - 1) * 100
 
-	def run_study(events, label):
-		buckets = {"hotter": {"SPY": [], "QQQ": [], "SOXX": []},
-				"cooler": {"SPY": [], "QQQ": [], "SOXX": []},
-				"inline": {"SPY": [], "QQQ": [], "SOXX": []}}
-		for date, actual, consenses in events:  			
-			reading = surprise(actual, consenses)
-			expectation = bucket(reading)
-		# print(f"\n{date}: surprise {reading:+.2f}pp ({expectation})")
-
+def run_study(events, label):
+	buckets = {"hotter": {"SPY": [], "QQQ": [], "SOXX": []},
+			"cooler": {"SPY": [], "QQQ": [], "SOXX": []},
+			"inline": {"SPY": [], "QQQ": [], "SOXX": []}}
+	for date, actual, consenses in events:  			
+		reading = surprise(actual, consenses)
+		expectation = bucket(reading)
+	# print(f"\n{date}: surprise {reading:+.2f}pp ({expectation})")
 		for tk in tickers:
 			r = reaction(tk, date, 1)
 			if r is not None:
@@ -125,11 +124,11 @@ def reaction(ticker, event_date, days=7):
 			# 	print (f" {tk}: No data")
 			# else:
 			# 	print(f" {tk}: {r:+.2f}% over 7 days")
-
-		for buck in ["hotter", "cooler", "inline"]:
+	print(f"\n=== {label} ===")
+	for buck in ["hotter", "cooler", "inline"]:
 		for tk in ["SPY", "QQQ", "SOXX"]:
 			vals = buckets[buck][tk]
-            # average if non-empty, print buck, tk, mean, count
+           	# average if non-empty, print buck, tk, mean, count
 			if not vals:
 				continue
 			print(f"{buck:7} {tk:5} avg {sum(vals)/len(vals):+.2f}%  (n={len(vals)})")
@@ -142,10 +141,6 @@ def main():
 	full = run_study(EVENTS, "full sample")
 	pre = run_study(hiking, "hiking 2022-2023")
 	post = run_study(easing, "easing 2024-2026")
-
-
-	
-			
 			
 
 
