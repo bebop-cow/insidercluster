@@ -73,7 +73,7 @@ def surprise(actual, consenses):
 def bucket(surprise, band=25):
 	if surprise > band:
 		return "hotter"
-	elif surprise < band:
+	elif surprise < -band:
 		return "cooler"
 	else:
 		return "inline"
