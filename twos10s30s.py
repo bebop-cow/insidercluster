@@ -38,8 +38,8 @@ def fetch_dxy():
 def fetch_live():
 	ticker = "^TYX"
 	tk = yf.Ticker(ticker)
-	last_close = tk.history(period="5d")["Close"].iloc[-1]
-	return last_close/10
+	return tk.history(period="5d")["Close"].iloc[-1]
+	
 
 
 def check_conditions(dxy, y30, dxy_level=99.0, y30_level=5.40):
@@ -59,8 +59,6 @@ def main():
     print(f"\n30Y  FRED {fred30:.2f}% (as of {spreads.index[-1].date()})")
     print(f"30Y  live {live30:.2f}%   move since: {delta:+.2f}")
     
-
-    print(f"as of {spreads.index[-1].date()}\n")
     for col in ["2Y", "10Y", "30Y"]:
         print(f"{col:8} {latest[col]:.2f}%")
     print()
@@ -71,7 +69,7 @@ def main():
     dxy = fetch_dxy()
     check_conditions(dxy, live30)
 
-
+	
 
 if __name__ == '__main__':
 	main()
