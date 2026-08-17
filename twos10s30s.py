@@ -35,6 +35,13 @@ def fetch_dxy():
 	last_close = tk.history(period="5d")["Close"].iloc[-1]
 	return last_close
 
+def fetch_live():
+	ticker = "^TYX"
+	tk = yf.Ticker(ticker)
+	last_close = tk.history(period="5d")["Close"].iloc[-1]
+	return last_close/10
+
+
 def check_conditions(dxy, y30, dxy_level=99.0, y30_level=5.40):
 	a = dxy < dxy_level
 	b = y30 > y30_level
@@ -46,8 +53,12 @@ def main():
     curve = build_curve()
     spreads = compute_spreads(curve)
     latest = spreads.iloc[-1]          # last row = most recent date
-    dxy = fetch_dxy()
-    check_conditions(dxy, latest["30Y"])
+    live30 = fetch_live()
+    fred30 = latest["30Y"]
+    delta = live30 - fred30
+    print(f"\n30Y  FRED {fred30:.2f}% (as of {spreads.index[-1].date()})")
+    print(f"30Y  live {live30:.2f}%   move since: {delta:+.2f}")
+    
 
     print(f"as of {spreads.index[-1].date()}\n")
     for col in ["2Y", "10Y", "30Y"]:
@@ -56,6 +67,9 @@ def main():
     for col in ["2s10s", "10s30s","2s30s", "fly"]:
         z = (latest[col] - spreads[col].mean()) / spreads[col].std()
         print(f"{col:8} {latest[col]:+.2f}   z={z:+.2f}")
+
+    dxy = fetch_dxy()
+    check_conditions(dxy, live30)
 
 
 
