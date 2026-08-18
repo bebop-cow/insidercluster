@@ -30,7 +30,7 @@ def build_combined():
 	spy = fetch_spy()      # now a series
 	dxy.index = dxy.index.tz_localize(None)     # strip timezone to match FRED
 	spy.index = spy.index.tz_localize(None)
-	df = pd.concat([thirty, dxy, spy], axis=1)
+	df = pd.concat([thirty, dxy, spy], axis=1, sort=True)
 	df.columns = ["30Y", "DXY", "SPY"]
 	return df.dropna()
 
@@ -46,10 +46,25 @@ def flag_days(df, y30=5.40, dxy_level=99.0):
 	print(f"both:              {df['flag'].sum()}")
 	return df
 
+def forward_returns(df, days=30):
+	df["fwd"] = df["SPY"].pct_change(days).shift(-days)*100
+
+	flagged =df[df["flag"]]["fwd"].dropna()
+	baseline =df["fwd"].dropna()
+
+	print(f"\nflagged days:  {flagged.mean():+.2f}%  (n={len(flagged)})")
+	print(f"baseline:      {baseline.mean():+.2f}%  (n={len(baseline)})")
+
+	#when did the days happen?
+	dates = df[df["flag"]].index
+	print(f"flagged range: {dates.min().date()} to {dates.max().date()}")
+	return df
+
 def main():
 	df = build_combined()
 	flag_days(df)
+	forward_returns(df)
 
 
 if __name__ == '__main__':
-	main()f
+	main()
