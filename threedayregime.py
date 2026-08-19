@@ -87,12 +87,12 @@ def streak_length(rets, i):
     while j>= 0 and (rets[j] > 0) == (rets[i] > 0):
         count += 1
         j -= 1
-        return count
+    return count
 
 def streak_study(df, direction="up"):
     rets = df["ret"].tolist()
     results = {}
-    for i in range(len(rens) - 1):
+    for i in range(len(rets) - 1):
         if (rets[i] > 0) != (direction == "up"):
             continue
         n = streak_length(rets, i)
