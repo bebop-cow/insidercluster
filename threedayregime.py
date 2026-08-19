@@ -101,11 +101,14 @@ def streak_study(df, direction="up"):
     return results
 
 def print_streaks(results, direction):
+    if base is not None:
+        print(f"baseline daily return: {base:+.3f}%")
     for n in sorted(results):
         vals = results[n]
         cont = sum(1 for v in vals if (v > 0) == (direction == "up"))
-        percent = cont / len(vals) * 100 
-        print(f"{direction } streak {n}:={len(vals):<5} , continued {percent:.1f}%")
+        percent = cont / len(vals) * 100
+        avg = sum(vals) / len (vals) 
+        print(f"{direction } streak {n}:={len(vals):<5} , continued {percent:.1f}% , avg {avg:+.3f}%")
 
 def main():
     ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
@@ -115,6 +118,8 @@ def main():
     if df is None:
         print("No data.")
         return
+
+    df["ret"].mean()
 
     print(f"Loaded {len(df)} trading days.\n")
 
