@@ -34,7 +34,7 @@ def build_combined():
 	df.columns = ["30Y", "DXY", "SPY"]
 	return df.dropna()
 
-def flag_days(df, y30=4.80, dxy_level=99.0):
+def flag_days(df, y30=5.40, dxy_level=99.0):
 	yield_ok = df["30Y"] > y30
 	dollar_ok = df["DXY"] < dxy_level
 	df["flag"] = yield_ok & dollar_ok
