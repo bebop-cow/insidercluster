@@ -103,7 +103,7 @@ def streak_study(df, direction="up"):
 def print_streaks(results, direction):
     for n in sorted(results):
         vals = results[n]
-        cont = sum(1 for v in vals if v > 0)
+        cont = sum(1 for v in vals if (v > 0) == (direction == "up"))
         percent = cont / len(vals) * 100 
         print(f"{direction } streak {n}:={len(vals):<5} , continued {percent:.1f}%")
 
@@ -118,13 +118,10 @@ def main():
 
     print(f"Loaded {len(df)} trading days.\n")
 
-    results = streak_study(df, "up")
-    print_streaks(results, "up")
-
-    
-
-
-
+    for d in ["up", "down"]:
+        results = streak_study(df, d)
+        print_streaks(results, d)
+        print()
 
 if __name__ == "__main__":
     main()
