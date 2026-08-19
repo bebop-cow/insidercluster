@@ -7,6 +7,7 @@ REGIME TESTER · v2 (does fading big up-days actually pay?)
 import sys
 import numpy as np
 import pandas as pd
+import statistics
 
 try:
     import yfinance as yf
@@ -50,24 +51,7 @@ def build_returns(ticker, years=HISTORY_YEARS):
     return df
 
 
-# ── label the regime: is each day a "big up day"? ─────────────────────
-def is_bullish_day(ret, threshold=DEFAULT_THRESHOLD):
-    """Option B: bullish if today's return exceeds the threshold."""
-    return ret > threshold
 
-
-# ── aggregation: given a set of next-day returns, summarize ───────────
-def summarize(next_rets, label):
-    """Print avg, win rate, and sample size for a set of next-day returns."""
-    n = len(next_rets)
-    if n == 0:
-        print(f"   {label:<28} n=0 (no qualifying days)")
-        return None
-    avg = np.mean(next_rets)
-    win = np.mean([1 if x > 0 else 0 for x in next_rets]) * 100
-    print(f"   {label:<28} n={n:<5} avg next-day {avg:+.3f}%  "
-          f"up {win:.0f}% of the time")
-    return avg
 
 def split_buckets(frame, threshold):
     bull_next = []
@@ -100,15 +84,16 @@ def streak_study(df, direction="up"):
         results.setdefault(n, []).append(nxt)
     return results
 
-def print_streaks(results, direction):
+def print_streaks(results, direction, base=None):
     if base is not None:
         print(f"baseline daily return: {base:+.3f}%")
     for n in sorted(results):
         vals = results[n]
         cont = sum(1 for v in vals if (v > 0) == (direction == "up"))
         percent = cont / len(vals) * 100
-        avg = sum(vals) / len (vals) 
-        print(f"{direction } streak {n}:={len(vals):<5} , continued {percent:.1f}% , avg {avg:+.3f}%")
+        avg = sum(vals) / len (vals)
+        med = statistics.median(vals) 
+        print(f"{direction } streak {n}:={len(vals):<5} , continued {percent:.1f}% , avg {avg:+.3f}% , med {med:.3f}%")
 
 def main():
     ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
