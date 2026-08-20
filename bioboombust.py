@@ -53,9 +53,25 @@ def compute_components(df):
 	df["vs_ma200"] = (df["XBI"] / df["ma200"] - 1) * 100
 	return df                 
 
+def score_components(df):
+	recent = df[df.index >= df.index[-1] - pd.DateOffset(years=2)]
+	latest = df.iloc[-1]
+	zs = []
+	for col in ["XBI_IBB", "XBI_SPY","drawdown", "vs_ma200"]:
+		z = (latest[col] - recent[col].mean()) / recent[col].std()
+		zs.append(z)
+		print(f"{col:8} {latest[col]:+.2f}   z={z:+.2f}")
+	score = sum(zs) / len(zs)
+	print(f"\nscore: {score:+.2f} (postive = boom-ish, negative = bust-ish)")
+	return score
+
+
 def main():
-	s = news_volume("XBI", "2025-07-31", "2026-07-31", API_KEY)
-	print(build_prices().tail())
+	df = build_prices()
+	df = compute_components(df)
+	score_components(df)
+	
+
 if __name__ == '__main__':
 	main()
 
