@@ -53,8 +53,8 @@ def compute_components(df):
 	df["vs_ma200"] = (df["XBI"] / df["ma200"] - 1) * 100
 	return df                 
 
-def score_components(df):
-	recent = df[df.index >= df.index[-1] - pd.DateOffset(years)]
+def score_components(df, years):
+	recent = df[df.index >= df.index[-1] - pd.DateOffset(years=years)]
 	latest = df.iloc[-1]
 	zs = []
 	for col in ["XBI_IBB", "XBI_SPY","drawdown", "vs_ma200"]:
