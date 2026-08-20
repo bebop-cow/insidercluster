@@ -54,7 +54,7 @@ def compute_components(df):
 	return df                 
 
 def score_components(df):
-	recent = df[df.index >= df.index[-1] - pd.DateOffset(years=2)]
+	recent = df[df.index >= df.index[-1] - pd.DateOffset(years)]
 	latest = df.iloc[-1]
 	zs = []
 	for col in ["XBI_IBB", "XBI_SPY","drawdown", "vs_ma200"]:
@@ -69,7 +69,8 @@ def score_components(df):
 def main():
 	df = build_prices()
 	df = compute_components(df)
-	score_components(df)
+	score_components(df,2)
+	score_components(df, 10)
 	
 
 if __name__ == '__main__':
