@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import requests
 import time
@@ -5,6 +6,13 @@ import time
 from dotenv import load_dotenv
 load_dotenv()          # reads .env into environment
 API_KEY = os.environ.get("FINNHUB_KEY")
+
+try:
+    import yfinance as yf
+except ImportError:
+    print("Run: pip install yfinance pandas numpy")
+    sys.exit(1)
+
 
 def news_perday(ticker, date, api_key):
 	try:
@@ -23,30 +31,31 @@ def news_volume(ticker, start, end, api_key):
 		counts.append(news_perday(ticker, date.strftime("%Y-%m-%d"), api_key))
 	time.sleep(1)
 	return pd.Series(counts, index=dates)
-	
 
+def fetch_close(ticker, period="10y"):
+	return yf.Ticker(ticker).history(period="10y")["Close"].tz_localize(None)
 
-# def fetch_pageviews(article, start, end):
-# 	url = f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/{article}/daily/{start}/{end}"
-# 	headers = {"User-Agent": "biotech-screen/1.0"}
-# 	r = requests.get(url, headers = headers)
-# 	data = r.json()["items"]
+def build_prices():
+	xbi = fetch_close("XBI")
+	ibb = fetch_close("IBB")
+	spy = fetch_close("SPY")
 
-# 	dates = []
-# 	views = []
-# 	for item in data:
-# 		dates.append(pd.to_datetime(item["timestamp"][:8], format = "%Y%m%d"))
-# 		views.append(item["views"])
-# 	return pd.Series(views, index =dates)
+	df = pd.concat([xbi, ibb, spy], axis=1, sort=True)
+	df.columns = ["XBI", "IBB", "SPY"]
+	return df.dropna()
 
-# for art in ["Biotechnology", "Moderna", "Ozempic"]:
-# 	s = fetch_pageviews(art, "20240101" , "20260801")
-# 	print(f"{art:20} min {s.min():>7} max{s.max():>7} mean {s.mean():>8.0f}")
+def compute_components(df):
+	df["XBI_IBB"] = df["XBI"] / df["IBB"]                      # ratio: small-cap vs large-cap
+	df["XBI_SPY"] = df["XBI"] / df["SPY"]           # ratio: sector vs market
+	df["peak"] = df["XBI"].cummax()           # running all-time high
+	df["drawdown"] = (df["XBI"] / df["peak"] - 1) * 100                    # % below that peak
+	df["ma200"] = df["XBI"].rolling(200).mean()
+	df["vs_ma200"] = (df["XBI"] / df["ma200"] - 1) * 100
+	return df                 
 
-	def main():
-		s = news_volume("NVO", "2026-07-01", "2026-07-31", API_KEY)
-		print(s)
-
+def main():
+	s = news_volume("XBI", "2025-07-31", "2026-07-31", API_KEY)
+	print(build_prices().tail())
 if __name__ == '__main__':
 	main()
 
