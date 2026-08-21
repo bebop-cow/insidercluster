@@ -54,7 +54,17 @@ def get_atm_iv(ticker, expiry_index=0):
     calls = chain.calls
     spot = tk.history(period="1d")["Close"].iloc[-1]
     nearest = (calls["strike"] - spot).abs().idxmin()   # index of closest strike
-    return calls.loc[nearest, "impliedVolatility"]      
+    return calls.loc[nearest, "impliedVolatility"] 
+
+def rolling_spread(returns, short=5, long=60):
+	short_vol = returns.rolling(short).std() * np.sqrt(252)     
+	long_vol = returns.rolling(long).std() * np.sqrt(252)     
+	spread = short_vol - long_vol
+	return spread.dropna()
+
+def spread_zscore(spread):
+	z = (spread.iloc[-1] - spread.mean()) / spread.std()
+	return z, spread.iloc[-1]
 
 
 def main():
@@ -76,6 +86,10 @@ def main():
 	print(f"\nIV (annualized):    {iv_annual:.1f}%")
 	print(f"GARCH (annualized): {garch_annual:.1f}%")
 	print(f"spread (IV - GARCH): {iv_annual - garch_annual:+.1f}%")
+
+	spread = rolling_spread(ret)
+	z, current = spread_zscore(spread)
+	print(f"\nvol spread: {current:+.1f}%  z={z:+.2f}")
 	
 
 if __name__ == '__main__':
