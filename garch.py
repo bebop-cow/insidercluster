@@ -1,4 +1,6 @@
 from arch import arch_model
+import pandas as pd
+import numpy as np
 
 try:
     import yfinance as yf
@@ -28,10 +30,21 @@ def fit_garch(returns):
 	fitted = model.fit(disp="off")
 	return fitted
 
+def forecast_vol(fitted, days=5):
+	fc = fitted.forecast(horizon=days)
+	variances = fc.variance.iloc[-1] #forecasted variance per day ahead
+	daily_vol = np.sqrt(variances) #variance -> std dev (daily vol %)
+	return daily_vol
+
+
 def main():
 	ret = get_returns("SPY")
 	fitted = fit_garch(ret)
 	print(fitted.summary())
+
+	daily = forecast_vol(fitted, 5)
+	print("\n forecasted daily vol (%):")
+	print(daily)
 
 if __name__ == '__main__':
 	main()
