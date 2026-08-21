@@ -62,7 +62,7 @@ def score_components(df, years):
 		zs.append(z)
 		print(f"{col:8} {latest[col]:+.2f}   z={z:+.2f}")
 	score = sum(zs) / len(zs)
-	print(f"\nscore: {score:+.2f} (postive = boom-ish, negative = bust-ish)")
+	print(f"\nscore: ({years}y baseline): {score:+.2f} (postive = boom-ish, negative = bust-ish)")
 	return score
 
 
