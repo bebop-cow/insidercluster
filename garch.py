@@ -1,6 +1,7 @@
 from arch import arch_model
 import pandas as pd
 import numpy as np
+from scipy import stats
 
 try:
     import yfinance as yf
@@ -66,6 +67,19 @@ def spread_zscore(spread):
 	z = (spread.iloc[-1] - spread.mean()) / spread.std()
 	return z, spread.iloc[-1]
 
+def tail_risk(fitted, spot, days=5, confidence=0.99):
+	total_vol = np.sqrt(fitted.forecast(horizon=days).variance.iloc[-1].sum())
+	nu = fitted.params["nu"]
+
+	t_crit = stats.t.ppf(confidence, nu)	
+	t_move = spot * (t_crit * total_vol / np.sqrt(nu/(nu-2))) / 100
+
+	n_crit = stats.norm.ppf(confidence)
+	n_move = spot * (n_crit * total_vol) /100
+
+	return t_move, n_move
+
+
 
 def main():
 	ret = get_returns("SPY")
@@ -90,6 +104,11 @@ def main():
 	spread = rolling_spread(ret)
 	z, current = spread_zscore(spread)
 	print(f"\nvol spread: {current:+.1f}%  z={z:+.2f}")
+
+	t_move, n_move = tail_risk(fitted, spot, 5, 0.99)
+	print(f"\n99% worst 5-day move:")
+	print(f"  normal model: -${n_move:.2f}")
+	print(f"  fat-tail (t): -${t_move:.2f}")
 	
 
 if __name__ == '__main__':
