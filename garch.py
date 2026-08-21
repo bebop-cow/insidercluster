@@ -1,4 +1,4 @@
-import arch
+from arch import arch_model
 
 try:
     import yfinance as yf
@@ -23,4 +23,16 @@ def get_returns(ticker, years=5):
 	ret = df["Close"].pct_change() * 100
 	return ret.dropna()
 
+def fit_garch(returns):
+	model = arch_model(returns, vol="Garch", p=1, q=1, mean="Constant", dist="normal")
+	fitted = model.fit(disp="off")
+	return fitted
+
+def main():
+	ret = get_returns("SPY")
+	fitted = fit_garch(ret)
+	print(fitted.summary())
+
+if __name__ == '__main__':
+	main()
 
