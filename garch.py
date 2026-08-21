@@ -27,7 +27,7 @@ def get_returns(ticker, years=5):
 	return ret.dropna()
 
 def fit_garch(returns):
-	model = arch_model(returns, vol="Garch", p=1, q=1, mean="Constant", dist="normal")
+	model = arch_model(returns, vol="Garch", p=1, q=1, mean="Constant", dist="t")
 	fitted = model.fit(disp="off")
 	return fitted
 
@@ -47,6 +47,15 @@ def expected_move_garch(fitted, spot, days=5):
 def fetch_close(ticker, period="10y"):
 	return yf.Ticker(ticker).history(period="10y")["Close"].tz_localize(None)
 
+def get_atm_iv(ticker, expiry_index=0):
+    tk = yf.Ticker(ticker)
+    expiry = tk.options[expiry_index]
+    chain = tk.option_chain(expiry)
+    calls = chain.calls
+    spot = tk.history(period="1d")["Close"].iloc[-1]
+    nearest = (calls["strike"] - spot).abs().idxmin()   # index of closest strike
+    return calls.loc[nearest, "impliedVolatility"]      
+
 
 def main():
 	ret = get_returns("SPY")
@@ -60,6 +69,14 @@ def main():
 	spot = fetch_close("SPY").iloc[-1]
 	gmove = expected_move_garch(fitted, spot, 5)
 	print(f"\nGARCH 5-day expected move: ±${gmove:.2f}  ({gmove/spot*100:.2f}%)")
+
+	iv = get_atm_iv("SPY", 0)          # real ATM IV, nearest expiry
+	iv_annual = iv * 100
+	garch_annual = daily.mean() * np.sqrt(252)
+	print(f"\nIV (annualized):    {iv_annual:.1f}%")
+	print(f"GARCH (annualized): {garch_annual:.1f}%")
+	print(f"spread (IV - GARCH): {iv_annual - garch_annual:+.1f}%")
+	
 
 if __name__ == '__main__':
 	main()
