@@ -40,14 +40,36 @@ def add_delta(df, spot, days):
 	df["delta"] = deltas
 	return df
 
-def plot_delta(df, spot):
-	plt.plot(df["strike"], df["delta"], marker="o")
-	plt.axvline(spot, color="red", linestyle="--")
-	plt.axhline(0.5, color="gray", linestyle=":")   # the coin-flip line
-	plt.xlabel("strike")
-	plt.ylabel("delta")
-	plt.title("AMD delta by strike")
+def call_gamma(S, K, iv, days, r=0.04):
+	T = days / 365
+	d1 = (math.log(S/K) + (r + iv**2/2) * T) / (iv * math.sqrt(T))
+	pdf = math.exp(-d1**2 / 2) / math.sqrt(2 * math.pi)         # normal PDF at d1
+	gamma = pdf / (S * iv * math.sqrt(T))
+	return gamma
+
+def add_gamma(df, spot, days):
+	gammas = []
+	for row in df.itertuples():
+		g = call_gamma(spot, row.strike, row.impliedVolatility, days)
+		gammas.append(g)
+	df["gamas"] = gammas
+	return df
+
+def plot_greeks(df, spot):
+	fig, ax1 = plt.subplots()
+
+	ax1.plot(df["strike"], df["delta"], marker="o", color="blue", label="delta")
+	ax1.axvline(spot, color="red", linestyle="--")
+	ax1.set_xlabel("strike")
+	ax1.set_ylabel("delta", color="blue")
+
+	ax2 = ax1.twinx()                    # second y-axis sharing the x
+	ax2.plot(df["strike"], df["gamma"], marker="s", color="green", label="gamma")
+	ax2.set_ylabel("gamma", color="green")
+
+	plt.title("AMD delta & gamma by strike")
 	plt.show()
+
 
 def plot_smile(df, expiry, spot):
 	plt.plot(df["strike"], df["impliedVolatility"] * 100, marker="o")
@@ -59,13 +81,15 @@ def plot_smile(df, expiry, spot):
 
 def main():
 	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
+	want_chart = "--chart" in sys.argv
 	df, expiry, spot = get_smile(ticker)
 	days = (pd.Timestamp(expiry) - pd.Timestamp.now()).days
 	delta = add_delta(df, spot, days)
 	print(f"expiry {expiry}")
 	print(df.to_string())
-	plot_smile(df, expiry, spot)
-	plot_delta(df, spot)
+	if want_chart:
+		plot_smile(df, expiry, spot)
+		plot_delta(df, spot)
 
 if __name__ == '__main__':
 	main()
