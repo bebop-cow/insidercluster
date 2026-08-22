@@ -82,7 +82,7 @@ def tail_risk(fitted, spot, days=5, confidence=0.99):
 
 
 def main():
-	ret = get_returns("amd")
+	ret = get_returns("SPY")
 	fitted = fit_garch(ret)
 	print(fitted.summary())
 
@@ -90,11 +90,11 @@ def main():
 	print("\n forecasted daily vol (%):")
 	print(daily)
 
-	spot = fetch_close("amd").iloc[-1]
+	spot = fetch_close("SPY").iloc[-1]
 	gmove = expected_move_garch(fitted, spot, 5)
 	print(f"\nGARCH 5-day expected move: ±${gmove:.2f}  ({gmove/spot*100:.2f}%)")
 
-	iv = get_atm_iv("amd", 0)          # real ATM IV, nearest expiry
+	iv = get_atm_iv("SPY", 0)          # real ATM IV, nearest expiry
 	iv_annual = iv * 100
 	garch_annual = daily.mean() * np.sqrt(252)
 	print(f"\nIV (annualized):    {iv_annual:.1f}%")
