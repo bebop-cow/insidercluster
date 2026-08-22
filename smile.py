@@ -14,17 +14,25 @@ def get_smile(ticker, expiry_index=0):
 	calls = tk.option_chain(expiry).calls
 	# keep only the two columns we need
 	df = calls[["strike" , "impliedVolatility"]].copy()
-	df = df[(df["strike"] >= lo) & (df["strike" <= hi])]
+	df = df[(df["strike"] >= lo) & (df["strike"] <= hi)]
 	# drop rows where IV is missing or zero (illiquid/junk strikes)
 	df = df[df["impliedVolatility"]> 0.001]
-	return df, expiry
+	return df, expiry, spot
 
+def plot_smile(df, expiry, spot):
+	plt.plot(df["strike"], df["impliedVolatility"] * 100, marker="o")
+	plt.axvline(spot, color="red"m linestyle"--")
+	plt.xlabel("strike")
+	plt.ylabel("IV %")
+	plt.title(f"AMD smile - {expiry}")
+	plt.show()
 
 def main():
 	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
 	df, expiry = get_smile(ticker)
 	print(f"expiry {expiry}")
 	print(df.to_string())
+	plot_smile(df, expiry, spot)
 
 if __name__ == '__main__':
 	main()
