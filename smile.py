@@ -52,7 +52,7 @@ def add_gamma(df, spot, days):
 	for row in df.itertuples():
 		g = call_gamma(spot, row.strike, row.impliedVolatility, days)
 		gammas.append(g)
-	df["gamas"] = gammas
+	df["gamma"] = gammas
 	return df
 
 def plot_greeks(df, spot):
@@ -85,11 +85,12 @@ def main():
 	df, expiry, spot = get_smile(ticker)
 	days = (pd.Timestamp(expiry) - pd.Timestamp.now()).days
 	delta = add_delta(df, spot, days)
+	gamma = add_gamma(df, spot, days)
 	print(f"expiry {expiry}")
 	print(df.to_string())
 	if want_chart:
 		plot_smile(df, expiry, spot)
-		plot_delta(df, spot)
+		plot_greeks(df, spot)
 
 if __name__ == '__main__':
 	main()
