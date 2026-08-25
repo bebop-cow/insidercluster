@@ -12,12 +12,19 @@ except ImportError:
 
 DEFAULT_TICKER = "SPY" 
 
+def pick_expiry(tk, min_days=5):
+	for exp in tk.options:
+		days_to_expiry = (pd.Timestamp(exp) - pd.Timestamp.now()).days
+		if days_to_expiry >= min_days:
+			return exp
+	return tk.options[-1]
+
 def get_smile(ticker, expiry_index=0):
 	tk = yf.Ticker(ticker)
 	last_close = tk.history(period="1d")["Close"].iloc[-1]
 	lo = last_close * 0.95
 	hi = last_close * 1.10
-	expiry = tk.options[expiry_index]
+	expiry = pick_expiry(tk, 5)
 	calls = tk.option_chain(expiry).calls
 	# keep only the two columns we need
 	df = calls[["strike" , "impliedVolatility"]].copy()
@@ -35,6 +42,9 @@ def call_delta(S, K, iv, days, r=0.04):
 def add_delta(df, spot, days):
 	deltas = []
 	for row in df.itertuples():
+		if row.impliedVolatility < 0.01:      # skip broken-IV strikes
+			deltas.append(None)
+			continue
 		d = call_delta(spot, row.strike, row.impliedVolatility, days)
 		deltas.append(d)
 	df["delta"] = deltas
@@ -50,12 +60,15 @@ def call_gamma(S, K, iv, days, r=0.04):
 def add_gamma(df, spot, days):
 	gammas = []
 	for row in df.itertuples():
+		if row.impliedVolatility < 0.01:
+			gammas.append(None)
+			continue
 		g = call_gamma(spot, row.strike, row.impliedVolatility, days)
 		gammas.append(g)
 	df["gamma"] = gammas
 	return df
 
-def plot_greeks(df, spot):
+def plot_greeks(df, spot, ticker):
 	fig, ax1 = plt.subplots()
 
 	ax1.plot(df["strike"], df["delta"], marker="o", color="blue", label="delta")
@@ -67,16 +80,16 @@ def plot_greeks(df, spot):
 	ax2.plot(df["strike"], df["gamma"], marker="s", color="green", label="gamma")
 	ax2.set_ylabel("gamma", color="green")
 
-	plt.title("AMD delta & gamma by strike")
+	plt.title(f"{ticker} delta & gamma by strike")
 	plt.show()
 
 
-def plot_smile(df, expiry, spot):
+def plot_smile(df, expiry, spot, ticker):
 	plt.plot(df["strike"], df["impliedVolatility"] * 100, marker="o")
 	plt.axvline(spot, color="red", linestyle="--")
 	plt.xlabel("strike")
 	plt.ylabel("IV %")
-	plt.title(f"AMD smile - {expiry}")
+	plt.title(f"{ticker} smile - {expiry}")
 	plt.show()
 
 def main():
@@ -84,13 +97,15 @@ def main():
 	want_chart = "--chart" in sys.argv
 	df, expiry, spot = get_smile(ticker)
 	days = (pd.Timestamp(expiry) - pd.Timestamp.now()).days
-	delta = add_delta(df, spot, days)
-	gamma = add_gamma(df, spot, days)
+	print("DEBUG days:", days, "expiry:", expiry)
+	df = df[df["impliedVolatility"] > 0.01]
+	df = add_delta(df, spot, days)
+	df = add_gamma(df, spot, days)
 	print(f"expiry {expiry}")
 	print(df.to_string())
 	if want_chart:
-		plot_smile(df, expiry, spot)
-		plot_greeks(df, spot)
+		plot_smile(df, expiry, spot, ticker)
+		plot_greeks(df, spot, ticker)
 
 if __name__ == '__main__':
 	main()

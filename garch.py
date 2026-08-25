@@ -107,8 +107,7 @@ def main():
 
 	t_move, n_move = tail_risk(fitted, spot, 5, 0.99)
 	print(f"\n99% worst 5-day move:")
-	print(f"  normal model: -${n_move:.2f}")
-	print(f"  fat-tail (t): -${t_move:.2f}")
+	print(f"  normal model: -${n_move:.2f}")print(f"  fat-tail (t): -${t_move:.2f}")
 	
 
 if __name__ == '__main__':
