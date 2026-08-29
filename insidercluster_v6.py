@@ -176,6 +176,9 @@ def analyze(filings):
     buy_rows, sell_rows = [], []
     for company, data in by_company.items():
         buyers, sellers = data["buyers"], data["sellers"]
+        dates = [b["date"] for b in all_buys if b["date"]]
+        first_buy = min(dates) if dates else "continue"
+        last_buy = max(dates) if dates else "continue"
         all_buys = [b for lst in buyers.values() for b in lst]
         all_sells = [s for lst in sellers.values() for s in lst]
 
