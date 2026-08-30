@@ -44,7 +44,7 @@ except ImportError:
     sys.exit(1)
 
 # your watchlist — edit freely
-DEFAULT_TICKERS = ["NKE", "RH", "GME", "AMC", "CTM", "IONQ", "ASTS", "LULU"]
+DEFAULT_TICKERS = ["ter", "Hood", "crwv", "AMd", "LEU", "ASPI", "SMR", "PLUG","OKLO"]
 
 # thresholds for flagging (tune as you learn)
 HIGH_SHORT_FLOAT = 20.0   # % — crowded short

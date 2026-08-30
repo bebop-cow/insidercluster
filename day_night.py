@@ -1,4 +1,6 @@
 import sys
+import pandas as pd
+import yfinance as yf
 
 DEFAULT_TICKER = "SPY"
 
