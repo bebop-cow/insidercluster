@@ -20,9 +20,22 @@ def fade_returns(df):
 	df["fade"] = df["spy_ret"] - df["arkk_ret"]
 	return df
 
+def report(df, label):
+	fade = df["fade"].sum()
+	spysum = df["spy_ret"].sum()
+	arkksum = df["arkk_ret"].sum()
+
+	print(f"\n=== {label} ===")
+	print(f"fade = {fade}, spy sum: {spysum}, ark sum: {arkksum} ")
+
 def main():
-	inverse = build(5)
-	fade_returns(inverse)
+	df = build(5)
+	df = fade_returns(df)
+	pre = df[df.index < "2023-01-01"]
+	post = df[df.index >= "2023-01-01"]
+	report(df, "FULL")
+	report(pre, "BUST 2021-2022")
+	report(post, "RECOVERY 2023-2026")
 
 if __name__ == '__main__':
 	main()
