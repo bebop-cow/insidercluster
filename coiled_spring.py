@@ -1,5 +1,6 @@
 import pandas as pd
 import yfinance as yf
+import numpy as np
 
 
 def flatten_columns(df):
@@ -21,7 +22,8 @@ def coil_score(ticker):
 	return vol, tightness
 	
 def main():
-	score = coil_score("AMD")
+	vol,tightness = coil_score("AMD")
+	print(f"AMD  vol {vol:.1f}%  tightness {tightness:.1f}%")
 
 
 if __name__ == '__main__':
