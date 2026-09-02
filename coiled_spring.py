@@ -28,8 +28,8 @@ def screen(tickers):
 	results = []
 	for tk in tickers:
 		ticker_score = coil_score(tk)
-		if tk.empty:
-			return None
+		if ticker_score is None:
+			continue
 		vol, tightness = ticker_score
 		coil = vol + tightness
 		results.append((tk, vol, tightness, coil))
