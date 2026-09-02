@@ -1,7 +1,18 @@
 import pandas as pd
 import yfinance as yf
 
-tickers = ["AAPL","NVDA","LLY","GOOGL","MSFT","V","AMD","NVO","MRK","GLW","AVGO","TER"]
+tickers = [
+    "AAPL","MSFT","NVDA","AMZN","GOOGL","META","BRK-B","LLY","AVGO","TSLA",
+    "JPM","V","UNH","XOM","MA","JNJ","PG","HD","COST","ORCL",
+    "ABBV","BAC","KO","MRK","CVX","PEP","ADBE","WMT","CRM","MCD",
+    "TMO","CSCO","ACN","ABT","LIN","DHR","WFC","TXN","VZ","AMD",
+    "PM","DIS","INTC","INTU","COP","CAT","UNP","IBM","GE","QCOM",
+    "NEE","HON","AMGN","LOW","SPGI","BA","NKE","RTX","GS","ISRG",
+    "PLD","SBUX","BKNG","MDT","BLK","ELV","AXP","T","DE","GILD",
+    "LMT","ADP","MDLZ","CVS","VRTX","C","MMC","REGN","SO","PGR",
+    "TJX","MO","BSX","ZTS","CB","DUK","SLB","EOG","BMY","NOW",
+    "APD","CL","ITW","WM","MU","FCX","EMR","GD","MCK","PYPL",
+]
 
 
 def flatten_columns(df):
