@@ -30,7 +30,7 @@ def measure(closes, anchor):
 	forward_return = (fwd.iloc[-1] / fwd.iloc[0] - 1) * 100
 	return base_vol, base_tightness, forward_return
 
-def run_study(tickers,anchor):
+def run_study(tickers,anchor, threshold=50):
 	rockets = []
 	duds = []
 	for tk in tickers:
