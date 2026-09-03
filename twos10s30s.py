@@ -59,7 +59,10 @@ def fetch_jgb_monthly():
 def fetch_jgb_daily():
 	url = "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv"
 	df = pd.read_csv(url, encoding="shift_jis", skiprows = 1)
-	return df
+	df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+	df = df.set_index("Date")
+	s = pd.to_numeric(df["10Y"], errors = "coerce")
+	return s.dropna()
 	
 def check_conditions(dxy, y30, dxy_level=99.0, y30_level=5.40):
 	a = dxy < dxy_level
@@ -120,21 +123,17 @@ def main():
 	dxy = fetch_dxy()
 	check_conditions(dxy, live30)
 
-	jgb = fetch_jgb()
-
-
 	print(f"\n30Y  {live30:.2f}%  {sparkline(spreads['30Y'])}  trigger 5.40  gap {live30-5.40:+.2f}")
 	print(f"DXY  {dxy:.2f}   {sparkline(dxy_hist)}  trigger 99.0  gap {dxy-99.0:+.2f}")
 
-	jgb = fetch_jgb_monthly()
-	jgb_recent = jgb[jgb.index >= pd.Timestamp.now() - pd.DateOffset(years=3)]
-	jgb_latest = jgb.iloc[-1]
-	jgb_z = (jgb_latest - jgb_recent.mean()) / jgb_recent.std()
-	print(f"\nJapan 10Y (monthly): {jgb_latest:.2f}%   z={jgb_z:+.2f}  (as of {jgb.index[-1].date()})")
+	jgb_hist = fetch_jgb_monthly()
+	jgbdaily = fetch_jgb_daily().iloc[-1]
+	recent = jgb_hist[jgb_hist.index >= pd.Timestamp.now() - pd.DateOffset(years=3)]
+	jgb_z = (jgbdaily - recent.mean()) / recent.std()
+	print(f"\nJapan 10Y: {jgbdaily:.3f}% (daily, live)  z={jgb_z:+.2f}  vs 3yr monthly baseline")
 	
-	jgbdaily = fetch_jgb_daily()
-	print(jgbdaily.columns.tolist())
-	print(jgbdaily.head())
+	
+	
 
 if __name__ == '__main__':
 	main()
