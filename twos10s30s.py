@@ -53,7 +53,7 @@ def fetch_live():
 	tk = yf.Ticker(ticker)
 	return tk.history(period="5d")["Close"].iloc[-1]
 
-def fetcj_jgb():
+def fetch_jgb():
 	return fetch_series("IRLTLT01JPM156N")
 	
 def check_conditions(dxy, y30, dxy_level=99.0, y30_level=5.40):
@@ -115,16 +115,17 @@ def main():
 	dxy = fetch_dxy()
 	check_conditions(dxy, live30)
 
-	jgp = fetcj_jgb()
+	jgb = fetch_jgb()
 
 
 	print(f"\n30Y  {live30:.2f}%  {sparkline(spreads['30Y'])}  trigger 5.40  gap {live30-5.40:+.2f}")
 	print(f"DXY  {dxy:.2f}   {sparkline(dxy_hist)}  trigger 99.0  gap {dxy-99.0:+.2f}")
 
-	print(f"\njgb {jgb:.2f}%")
-
-	if want_chart:
-		plot_curve(spreads, dxy_hist)
+	jgb = fetch_jgb()
+    jgb_recent = jgb[jgb.index >= pd.Timestamp.now() - pd.DateOffset(years=3)]
+    jgb_latest = jgb.iloc[-1]
+    jgb_z = (jgb_latest - jgb_recent.mean()) / jgb_recent.std()
+    print(f"\nJapan 10Y (monthly): {jgb_latest:.2f}%   z={jgb_z:+.2f}  (as of {jgb.index[-1].date()})")
 	
 
 if __name__ == '__main__':
