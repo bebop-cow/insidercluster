@@ -132,8 +132,6 @@ def main():
 	jgb_z = (jgbdaily - recent.mean()) / recent.std()
 	print(f"\nJapan 10Y: {jgbdaily:.3f}% (daily, live)  z={jgb_z:+.2f}  vs 3yr monthly baseline")
 	
-	
-	
 
 if __name__ == '__main__':
 	main()

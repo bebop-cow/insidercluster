@@ -3,15 +3,12 @@ import yfinance as yf
 
 tickers = [
     "AAPL","MSFT","NVDA","AMZN","GOOGL","META","BRK-B","LLY","AVGO","TSLA",
-    "JPM","V","UNH","XOM","MA","JNJ","PG","HD","COST","ORCL",
-    "ABBV","BAC","KO","MRK","CVX","PEP","ADBE","WMT","CRM","MCD",
-    "TMO","CSCO","ACN","ABT","LIN","DHR","WFC","TXN","VZ","AMD",
-    "PM","DIS","INTC","INTU","COP","CAT","UNP","IBM","GE","QCOM",
-    "NEE","HON","AMGN","LOW","SPGI","BA","NKE","RTX","GS","ISRG",
-    "PLD","SBUX","BKNG","MDT","BLK","ELV","AXP","T","DE","GILD",
-    "LMT","ADP","MDLZ","CVS","VRTX","C","MMC","REGN","SO","PGR",
-    "TJX","MO","BSX","ZTS","CB","DUK","SLB","EOG","BMY","NOW",
-    "APD","CL","ITW","WM","MU","FCX","EMR","GD","MCK","PYPL",
+    "JPM","V","UNH","XOM","MA","IONQ","ASTS","GLW","CAT","ORCL",
+    "ASPI","TSM","LEU","MRK","LULU","MDB","ARM","WMT","CRM","MCD",
+    "TER","CSCO","SKHY","MRNA","BNTX","DHR","WFC","TXN","VZ","AMD",
+    "PM","DIS","INTC","NXE","NFLX","CAT","UNP","IBM","GE","QCOM",
+    "NEE","HON","AMGN","LUNR","RKLB","BA","NKE","NIO","GS","ADI",
+    "CRWV","NET","PLTR","PANW","BLK","SNOW","DELL","SPCX","DE","GILD",
 ]
 
 
@@ -58,6 +55,26 @@ def run_study(tickers,anchor, threshold=50):
 			duds.append((tk, base_vol,base_tightness, forward_return))
 	return rockets, duds
 
+def direction_test(tickers, anchor, vol_threshold=50):
+	up, down, flat = [], [], []
+	for tk in tickers:
+		closes = get_closes(tk, 3)
+		if closes is None:
+			continue
+		result = measure(closes, anchor)
+		if result is None:
+			continue
+		base_vol, base_tight, fwd = result
+		if base_vol < vol_threshold:      # only look at the volatile ones
+			continue
+		if fwd >= 50:
+			up.append((tk, fwd))
+		elif fwd <= -30:
+			down.append((tk, fwd))
+		else:
+			flat.append((tk, fwd))
+	return up, down, flat
+
 def main():
     anchor = pd.Timestamp.now() - pd.DateOffset(months=12)
     rockets, duds = run_study(tickers, anchor)
@@ -69,5 +86,7 @@ def main():
     print(f"ROCKETS (n={len(rockets)}): base_vol {avg(rockets,1):.1f}%  base_tight {avg(rockets,2):.1f}%")
     print(f"DUDS    (n={len(duds)}): base_vol {avg(duds,1):.1f}%  base_tight {avg(duds,2):.1f}%")
 
+    direction = direction_test(tickers, anchor, vol_threshold=50)
+    print(f"{direction}")
 if __name__ == '__main__':
 	main()
