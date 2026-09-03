@@ -52,6 +52,9 @@ def fetch_live():
 	ticker = "^TYX"
 	tk = yf.Ticker(ticker)
 	return tk.history(period="5d")["Close"].iloc[-1]
+
+def fetcj_jgb():
+	return fetch_series("IRLTLT01JPM156N")
 	
 def check_conditions(dxy, y30, dxy_level=99.0, y30_level=5.40):
 	a = dxy < dxy_level
@@ -112,8 +115,13 @@ def main():
 	dxy = fetch_dxy()
 	check_conditions(dxy, live30)
 
+	jgp = fetcj_jgb()
+
+
 	print(f"\n30Y  {live30:.2f}%  {sparkline(spreads['30Y'])}  trigger 5.40  gap {live30-5.40:+.2f}")
 	print(f"DXY  {dxy:.2f}   {sparkline(dxy_hist)}  trigger 99.0  gap {dxy-99.0:+.2f}")
+
+	print(f"\njgb {jgb:.2f}%")
 
 	if want_chart:
 		plot_curve(spreads, dxy_hist)
