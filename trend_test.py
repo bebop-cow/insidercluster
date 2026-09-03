@@ -1,3 +1,5 @@
+import pandas as pd
+import yfinance as yf
 
 tickers = [
     "AAPL","MSFT","NVDA","AMZN","GOOGL","META","BRK-B","LLY","AVGO","TSLA",
