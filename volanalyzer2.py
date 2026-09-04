@@ -104,11 +104,11 @@ def current_atm_iv(ticker):
     calls = tk.option_chain(expiry).calls
     spot = tk.history(period="1d")["Close"].iloc[-1]
     days = (pd.Timestamp(expiry) - pd.Timestamp.now()).days
-    #nearest to money strike with a real price
-    calls =calls[calls["lastPrice"] > 0.05]
-    nearest = (calls["strike"] - spot).abs().idxmin()
-    row = calls.loc[nearest]
-    return implied_vol(row["lastPrice"], spot, row["strike"], days)
+    calls = calls[(calls["bid"] > 0) & (calls["ask"] > 0)]      # filter first
+    nearest = (calls["strike"] - spot).abs().idxmin()           # find strike
+    row = calls.loc[nearest]                                    
+    mid = (row["bid"] + row["ask"]) / 2                         
+    return implied_vol(mid, spot, row["strike"], days)
 
 
 # ── earnings ramp: RV before vs after each past earnings date ─────────
@@ -155,84 +155,67 @@ def earnings_ramp(ticker_obj, price_df):
 # MAIN — WE BUILD THIS TOGETHER. Skeleton below; you fill the logic.
 # ══════════════════════════════════════════════════════════════════════
 def main():
-     tickers = [a.upper() for a in sys.argv[1:]] or DEFAULT_TICKERS
-     current_atm_iv(tickers)
+    tickers = [a.upper() for a in sys.argv[1:]] or DEFAULT_TICKERS
 
-    # print("=" * 64)
-    # print("VOLATILITY ANALYZER · IV vs RV divergence + earnings ramp")
-    # print("=" * 64)
+    print("=" * 64)
+    print("VOLATILITY ANALYZER · IV vs RV divergence + earnings ramp")
+    print("=" * 64)
 
-    # # ---- STEP 1: loop over tickers -----------------------------------
-    # # For each ticker you need to:
-    # #   a) create the yfinance Ticker object
-    # #   b) download ~1 year of price history (for RV)
-    # #   c) flatten the columns (MultiIndex gotcha)
-    # #   d) get the current spot price (last close)
-    # #   e) compute RV  → realized_vol(price_df)
-    # #   f) compute IV  → current_atm_iv(ticker_obj, spot)
-    # #   g) compute the divergence (IV/RV ratio, and IV - RV)
-    # #   h) store all that in a row dict, append to a list
-    # #
-    # # TODO (you): write the loop.
-    # rows = []
-    # for tk in tickers:
-    #     ticker_obj = yf.Ticker(tk)
-    #     price_df = yf.download(tk, period="1y", progress=False)
-    #     if price_df.empty:
-    #         continue
-    #     price_df = flatten_columns(price_df)
-    #     last_close = price_df["Close"].iloc[-1]
-    #     rv = realized_vol(price_df)
-    #     iv = current_atm_iv(ticker_obj,last_close)
-    #     if rv is None or iv is None:
-    #         continue
-    #     divergence_ratio = iv/rv
-    #     divergence_diff = iv - rv
+    rows = []
+    for tk in tickers:
+        ticker_obj = yf.Ticker(tk)
+        price_df = yf.download(tk, period="1y", progress=False)
+        if price_df.empty:
+            continue
+        price_df = flatten_columns(price_df)
+        last_close = ticker_obj.history(period="1d")["Close"].iloc[-1]
+        rv = realized_vol(price_df)
+        iv = current_atm_iv(tk) * 100
+        if rv is None or iv is None:
+            continue
+        divergence_ratio = iv/rv
+        divergence_diff = iv - rv
 
-    #     rows.append({"ticker":tk, "spot": last_close, 
-    #             "iv": iv, "rv": rv, "ratio": divergence_ratio, "diff": divergence_diff})
+        rows.append({"ticker":tk, "spot": last_close, 
+                "iv": iv, "rv": rv, "ratio": divergence_ratio, "diff": divergence_diff})
 
 
-    # # ---- STEP 2: print the IV vs RV table ----------------------------
-    # # Columns: TICKER, SPOT, IV%, RV%, IV/RV ratio, and a verdict
-    # # (ratio > ~1.2 = options rich → SELL lean; < ~1.0 = cheap → BUY lean)
-    # #
-    # # TODO (you): print a header, then a row per ticker.
-    # print(f"\n{'TICKER':<7}{'SPOT':<9}{'IV%':<8}{'RV%':<8}{'IV/RV':<8}VERDICT")
-    # print("-" * 50)
-    # for r in rows:
-    #     # TODO: compute a verdict string from r["ratio"]
-    #     #   ratio > 1.2  → options RICH  → "SELL premium"
-    #     #   ratio < 1.0  → options CHEAP → "BUY premium"
-    #     #   in between    → "neutral"
-    #     if r["ratio"] > 1.2:
-    #         verdict = "SELL premium"
-    #     elif r["ratio"] < 1.0:
-    #         verdict = "BUY premium"
-    #     else:
-    #         verdict = "neutral"
+    # ---- STEP 2: print the IV vs RV table ----------------------------
+    # Columns: TICKER, SPOT, IV%, RV%, IV/RV ratio, and a verdict
+    # (ratio > ~1.2 = options rich → SELL lean; < ~1.0 = cheap → BUY lean)
+    #
+    print(f"\n{'TICKER':<7}{'SPOT':<9}{'IV%':<8}{'RV%':<8}{'IV/RV':<8}VERDICT")
+    print("-" * 50)
+    for r in rows:
+        # TODO: compute a verdict string from r["ratio"]
+        #   ratio > 1.2  → options RICH  → "SELL premium"
+        #   ratio < 1.0  → options CHEAP → "BUY premium"
+        #   in between    → "neutral"
+        if r["ratio"] > 1.2:
+            verdict = "SELL premium"
+        elif r["ratio"] < 1.0:
+            verdict = "BUY premium"
+        else:
+            verdict = "neutral"
         
-    #     print(f"{r['ticker']:<7}${r['spot']:<8.2f}{r['iv']:<8.1f}"
-    #           f"{r['rv']:<8.1f}{r['ratio']:<8.2f}{verdict}")
+        print(f"{r['ticker']:<7}${r['spot']:<8.2f}{r['iv']:<8.1f}"
+              f"{r['rv']:<8.1f}{r['ratio']:<8.2f}{verdict}")
 
-    # # ---- STEP 3 (optional): earnings ramp per ticker -----------------
-    # # For each ticker, call earnings_ramp() and show whether RV was
-    # # elevated around past earnings dates.
-    # #
-    # # TODO (you
-    # print(f"\n{'='*50}")
-    # print("EARNINGS VOL PATTERN (RV before vs after each print)")
-    # print("=" * 50)
-    # for r in rows:
-    #     tk = r["ticker"]
-    #     ticker_obj = yf.Ticker(tk)
-    #     price_df = flatten_columns(yf.download(tk, period="1y", progress=False))
-    #     ramps = earnings_ramp(ticker_obj, price_df)
-    #     if not ramps:
-    #         continue
-    #     print(tk)
-    #     for d in ramps:
-    #         print(f"   {d['date']}:  pre {d['rv_pre']:.1f}%  →  post {d['rv_post']:.1f}%")
+    # ---- STEP 3 (optional): earnings ramp per ticker -----------------
+    
+    print(f"\n{'='*50}")
+    print("EARNINGS VOL PATTERN (RV before vs after each print)")
+    print("=" * 50)
+    for r in rows:
+        tk = r["ticker"]
+        ticker_obj = yf.Ticker(tk)
+        price_df = flatten_columns(yf.download(tk, period="1y", progress=False))
+        ramps = earnings_ramp(ticker_obj, price_df)
+        if not ramps:
+            continue
+        print(tk)
+        for d in ramps:
+            print(f"   {d['date']}:  pre {d['rv_pre']:.1f}%  →  post {d['rv_post']:.1f}%")
 
 
 
