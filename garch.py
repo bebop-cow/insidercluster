@@ -76,8 +76,8 @@ def tail_risk(fitted, spot, days=5, confidence=0.99):
 
 
 def main():
-	tickers = [a.upper() for a in sys.argv[1:]] or DEFAULT_TICKERS
-	ret = get_returns(tickers)
+	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
+	ret = get_returns(ticker)
 	fitted = fit_garch(ret)
 	print(fitted.summary())
 
@@ -85,11 +85,11 @@ def main():
 	print("\n forecasted daily vol (%):")
 	print(daily)
 
-	spot = fetch_close(tickers).iloc[-1]
+	spot = fetch_close(ticker).iloc[-1]
 	gmove = expected_move_garch(fitted, spot, 5)
 	print(f"\nGARCH 5-day expected move: ±${gmove:.2f}  ({gmove/spot*100:.2f}%)")
 
-	iv = current_atm_iv(tickers)          # real ATM IV, nearest expiry
+	iv = current_atm_iv(ticker)          # real ATM IV, nearest expiry
 	iv_annual = iv * 100
 	garch_annual = daily.mean() * np.sqrt(252)
 	print(f"\nIV (annualized):    {iv_annual:.1f}%")
