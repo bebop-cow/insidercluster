@@ -6,9 +6,9 @@ def flatten_columns(df):
 		df.columns = df.columns.get_level_values(0)
 	return df
 
-def build(months=3):
+def build(years=2):
 	end = pd.Timestamp.now()
-	start = end - pd.DateOffset(months=months)
+	start = end - pd.DateOffset(years=years)
 	df = yf.download(["V", "QQQ"], start=start.strftime("%Y-%m-%d"),
 		end=end.strftime("%Y-%m-%d"), progress=False)
 	closes = df["Close"]              # sub-frame: QQQ and V columns
