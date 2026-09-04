@@ -19,5 +19,7 @@ def implied_vol(market_price, S, K, days, r=0.04):
 			lo = mid
 	return mid
 
-p = bs_call_price(100, 100, 0.20, 30)   # price at 20% vol
-print(implied_vol(p, 100, 100, 30))     # should recover ~0.20
+
+if __name__ == '__main__':
+	p = bs_call_price(100, 100, 0.20, 30)   # price at 20% vol
+	print(implied_vol(p, 100, 100, 30))     # should recover ~0.20
