@@ -1,5 +1,6 @@
 import pandas as pd
 import yfinance as yf
+from openpyxl.workbook import Workbook
 
 tickers =["V", "CVX", "TER", "CRWV", "AMD", "GOOGL", "NVO", "AAPL", "GLW"]
 def flatten_columns(df):
