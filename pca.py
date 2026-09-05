@@ -2,7 +2,6 @@ import pandas as pd
 import yfinance as yf
 
 tickers =["V", "CVX", "TER", "CRWV", "AMD", "GOOGL", "NVO", "AAPL", "GLW"]
-ticker = "Spy"
 def flatten_columns(df):
 	if isinstance(df.columns, pd.MultiIndex):
 		df.columns = df.columns.get_level_values(0)
@@ -19,18 +18,20 @@ def days(ticker, days):
 	closes = df["Close"]
 	return closes
 
-def results(tickers):
-	results = []
+def results(tickers, n=7):
+	data ={}
 	for tk in tickers:
-		r = days(tk, 7)
+		r = days(tk, n)
 		if r is None:
 			continue                 # skip bad ticker, keep going
-		results.append((tk, r))
-	results.sort(key=lambda x: x[1], reverse=True)   # once, after loop
-	return results
+		data[tk] = r
+	return pd.DataFrame(data)
 
 def main():
-	day = results(tickers, 7)
+	df = results(tickers,7)
+	print(df)
+	df.to_excel("closes.xlsx")
+	print("wrote closes.xlsx")
 	
 
 if __name__ == '__main__':
