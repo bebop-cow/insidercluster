@@ -19,6 +19,19 @@ def days(ticker, days):
 	closes = df["Close"]
 	return closes
 
+def results(tickers):
+	results = []
+	for tk in tickers:
+		r = days(tk, 7)
+		if r is None:
+			continue                 # skip bad ticker, keep going
+		results.append((tk, r))
+	results.sort(key=lambda x: x[1], reverse=True)   # once, after loop
+	return results
+
 def main():
-	day = days(ticker, 2)
-	print(f"spy closes {day}")
+	day = results(tickers, 7)
+	
+
+if __name__ == '__main__':
+	main()
