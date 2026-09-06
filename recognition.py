@@ -33,12 +33,18 @@ def capex_depreciation_gap(tickers):
         results.append((tk, capex, dep, gap, ratio))
     return results
 
+def gap_trend(ticker):
+    tk  = yf.Ticker(ticker)
+    try:
+        capex = tk.quarterly_cashflow.loc["Capital Expenditure"].abs()
+        dep = tk.quarterly_cashflow,loc["Depreciation and Amortization"]
+        ratio = capex / dep
+        return ratio
+    except Exception:
+        return None
+
 def main():
-    tickers = ["META", "MSFT", "GOOGL", "AMZN"]
-    gaps = capex_depreciation_gap(tickers)
-    print(f"{'ticker':7}{'capex':>14}{'deprec':>14}{'gap':>14}{'ratio':>7}")
-    for tk, capex, dep, gap, ratio in gaps:
-        print(f"{tk:7}{capex/1e9:>12.1f}B{dep/1e9:>12.1f}B{gap/1e9:>12.1f}B{ratio:>7.1f}")
+    print(gap_trend("GOOGL"))
 
 if __name__ == '__main__':
     main()
