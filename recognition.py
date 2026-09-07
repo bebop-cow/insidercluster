@@ -1,4 +1,5 @@
-import mathplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import sys
 import yfinance as yf
 
 def probe_yf(ticker):
@@ -36,15 +37,11 @@ def capex_depreciation_gap(tickers):
 
 def gap_trend(ticker):
     tk  = yf.Ticker(ticker)
-    try:
-        capex = tk.quarterly_cashflow.loc["Capital Expenditure"].abs()
-        dep = tk.quarterly_cashflow.loc["Depreciation and Amortization"]
-        ratio = capex / dep
-        return ratio
-    except Exception:
-        return None
-   
+    capex = tk.quarterly_cashflow.loc["Capital Expenditure"].abs()
+    dep = tk.quarterly_cashflow.loc["Depreciation And Amortization"]
+    ratio = capex / dep
     return ratio.dropna()
+    
 
 def plot_trends(tickers):
     for tk in tickers:
@@ -55,12 +52,14 @@ def plot_trends(tickers):
         plt.plot(s.index, s.values, marker = "o", label=tk)
     plt.legend()
     plt.ylabel("capex / depreciation")
-    plt.table("AI capex deferral trend")
+    plt.title("AI capex deferral trend")
+    plt.show()
 
 
 def main():
     want_chart = "--chart" in sys.argv
-    for tk in ["META", "MSFT", "AMZN", "NVDA"]:
+    tickers = ["META", "MSFT", "AMZN", "NVDA"]
+    for tk in tickers:
         print(f"\n{tk}:")
         print(gap_trend(tk))
 
