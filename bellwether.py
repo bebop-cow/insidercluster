@@ -29,11 +29,23 @@ def basket_performance(tickers, months=6):
 		results.append((tk, ret))
 	return results
 
-def main ():
-	tickers = ["PG", "PEP", "WMT", "COST", "KO", "CAT", "FDX"]
+ef main():
+    tickers = ["PG", "PEP", "WMT", "COST", "KO", "CAT", "FDX"]
+    perf = basket_performance(tickers, 6)
 
-	perf = basket_performance(tickers, 6)
-	print(f"{perf}")
+    # basket average
+    basket_avg = sum(r for _, r in perf) / len(perf)
+
+    # SPY benchmark — same return calc
+    spy = get_closes("SPY", 6)
+    spy_ret = (spy.iloc[-1] / spy.iloc[0] - 1) * 100
+
+    # print each name
+    for tk, r in perf:
+        print(f"{tk:6} {r:+.1f}%")
+    print(f"\nbasket avg: {basket_avg:+.1f}%")
+    print(f"SPY:        {spy_ret:+.1f}%")
+    print(f"basket - SPY: {basket_avg - spy_ret:+.1f}%   (positive = defensive outperforming = risk-off tell)")
 
 if __name__ == '__main__':
 	main()
