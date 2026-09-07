@@ -21,11 +21,11 @@ def get_closes(ticker, months = 6):
 def basket_performance(tickers, months=6):
 	results = []
 	for tk in tickers:
-		performance = get_closes(ticker, months)
+		performance = get_closes(tk, months)
 		if performance is None:
 			continue
 		closes = performance
-		ret = (closes.iloc[-1] / closes.iloc[0] - 1 * 100)
+		ret = (closes.iloc[-1] / closes.iloc[0] - 1) * 100
 		results.append((tk, ret))
 	return results
 
@@ -33,6 +33,9 @@ def main ():
 	tickers = ["PG", "PEP", "WMT", "COST", "KO", "CAT", "FDX"]
 
 	perf = basket_performance(tickers, 6)
-	print(f"{basket_performance}")
+	print(f"{perf}")
+
+if __name__ == '__main__':
+	main()
 
 
