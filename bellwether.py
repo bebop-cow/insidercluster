@@ -29,7 +29,7 @@ def basket_performance(tickers, months=6):
 		results.append((tk, ret))
 	return results
 
-ef main():
+def main():
     tickers = ["PG", "PEP", "WMT", "COST", "KO", "CAT", "FDX"]
     perf = basket_performance(tickers, 6)
 
