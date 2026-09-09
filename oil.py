@@ -13,20 +13,20 @@ def same_day_corr(df):
 	rets = df.pct_change().dropna()
 	return rets["USO"].corr(rets["XLE"])
 
-def lead_lag(df):
-	rets = df.pct_change().dropna()
-	xle_next = rets["XLE"].shift(-1)
-	return rets["USO"].corr(xle_next)
+def lead_lag(df, max_lag=5):
+    rets = df.pct_change().dropna()
+    for lag in range(0, max_lag + 1):
+        xle_shifted = rets["XLE"].shift(-lag)
+        c = rets["USO"].corr(xle_shifted)
+        print(f"lag {lag}d: {c:+.2f}")
 
-
-	 
 
 def main():
 	df = build(12)
 	c = same_day_corr(df)
 	n = lead_lag(df)
 	print(f"USO vs XLE same-day correlation: {c:.2f}")
-	print(f"USO vs XLE next-day correlation: {n:.2f}")
+	
 
 if __name__ == '__main__':
 	main()
