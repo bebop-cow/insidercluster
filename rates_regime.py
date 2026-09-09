@@ -34,12 +34,11 @@ def compare(df,days):
 	print(f"RISING rates:  {rising.mean():+.2f}%  (n={len(rising)})")
     print(f"FALLING rates: {falling.mean():+.2f}%  (n={len(falling)})")
 
-
-
-
-
 def main():
-	print(build().tail())
+    df = build(20)
+    df = flag_regime(df)
+    df = forward_returns(df, 63)
+    compare(df, 63)
 
-if __name__ == '__main__':
-	main()
+if __name__ == "__main__":
+    main()
