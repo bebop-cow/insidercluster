@@ -35,7 +35,6 @@ def compare(df,days):
 	print(f"FALLING rates: {falling.mean():+.2f}%  (n={len(falling)})")
 
 def main():
-    def main():
     df = build(20)
     df = flag_regime(df)
     df = forward_returns(df, 63)
