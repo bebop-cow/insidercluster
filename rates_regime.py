@@ -32,13 +32,16 @@ def compare(df,days):
 	rising = df[df["rising"]]["fwd"].dropna()
 	falling = df[~df["rising"]]["fwd"].dropna()
 	print(f"RISING rates:  {rising.mean():+.2f}%  (n={len(rising)})")
-    print(f"FALLING rates: {falling.mean():+.2f}%  (n={len(falling)})")
+	print(f"FALLING rates: {falling.mean():+.2f}%  (n={len(falling)})")
 
 def main():
+    def main():
     df = build(20)
     df = flag_regime(df)
     df = forward_returns(df, 63)
-    compare(df, 63)
+    print("=== FULL ===");  compare(df, 63)
+    print("=== pre-2020 ==="); compare(df[df.index < "2020-01-01"], 63)
+    print("=== 2020+ ===");   compare(df[df.index >= "2020-01-01"], 63)
 
 if __name__ == "__main__":
     main()
