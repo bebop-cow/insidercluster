@@ -34,11 +34,20 @@ def current_atm_iv(ticker):
 	calls = tk.option_chain(expiry).calls
 	spot = tk.history(period="1d")["Close"].iloc[-1]
 	days = (pd.Timestamp(expiry) - pd.Timestamp.now()).days
-	calls = calls[(calls["bid"] > 0) & (calls["ask"] > 0)]
-	nearest = (calls["strike"] - spot).abs().idxmin()
-	row = calls.loc[nearest]
-	mid = (row["bid"] + row["ask"]) / 2
-	return implied_vol(mid, spot, row["strike"], days)
+
+	live = calls[(calls["bid"] > 0) & (calls["ask"] > 0)]
+	if not live.empty:
+		live = live.copy()
+		live["mid"] = (live["bid"] + live["ask"]) / 2
+	else:
+		live = calls[calls["lastPrice"] > 0.05].copy()   # fallback: last traded
+		if live.empty:
+			return None
+		live["mid"] = live["lastPrice"]
+
+	nearest = (live["strike"] - spot).abs().idxmin()
+	row = live.loc[nearest]
+	return implied_vol(row["mid"], spot, row["strike"], days)
 
 if __name__ == '__main__':
 	main()
