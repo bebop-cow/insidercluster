@@ -15,9 +15,9 @@ def same_day_corr(df):
 	 
 
 def main():
-	corr = build(12)
-	df = same_day_corr(corr)
-	print(f"Correlation between the two {df}")
-
+	df = build(12)
+	c = same_day_corr(df)
+    print(f"USO vs XLE same-day correlation: {c:.2f}")
+    
 if __name__ == '__main__':
 	main()
