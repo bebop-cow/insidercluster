@@ -26,9 +26,15 @@ def flag_regime(df, window=100):
 
 def forward_returns(df, days=63):
 	df["fwd"] = df["SPY"].pct_change(days).shift(-days) * 100
+	return df
+
+def compare(df,days):
 	rising = df[df["rising"]]["fwd"].dropna()
 	falling = df[~df["rising"]]["fwd"].dropna()
-	print(f "rising mean: {rising/rising.count()} & falling mean: {falling/falling.count}")
+	print(f"RISING rates:  {rising.mean():+.2f}%  (n={len(rising)})")
+    print(f"FALLING rates: {falling.mean():+.2f}%  (n={len(falling)})")
+
+
 
 
 
