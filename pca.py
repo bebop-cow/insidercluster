@@ -29,7 +29,7 @@ def results(tickers, n=7):
 	return pd.DataFrame(data)
 
 def main():
-	df = results(tickers,7)
+	df = results(tickers,500)
 	print(df)
 	print(df.shape)
 	df.to_excel("closes.xlsx")
