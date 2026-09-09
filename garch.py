@@ -90,11 +90,14 @@ def main():
 	print(f"\nGARCH 5-day expected move: ±${gmove:.2f}  ({gmove/spot*100:.2f}%)")
 
 	iv = current_atm_iv(ticker)          # real ATM IV, nearest expiry
-	iv_annual = iv * 100
-	garch_annual = daily.mean() * np.sqrt(252)
-	print(f"\nIV (annualized):    {iv_annual:.1f}%")
-	print(f"GARCH (annualized): {garch_annual:.1f}%")
-	print(f"spread (IV - GARCH): {iv_annual - garch_annual:+.1f}%")
+	if iv is None:
+		print("\nIV: unavailable (market closed / no quotes)")
+	else:
+		iv_annual = iv * 100
+		garch_annual = daily.mean() * np.sqrt(252)
+		print(f"\nIV (annualized):    {iv_annual:.1f}%")
+		print(f"GARCH (annualized): {garch_annual:.1f}%")
+		print(f"spread (IV - GARCH): {iv_annual - garch_annual:+.1f}%")
 
 	spread = rolling_spread(ret)
 	z, current = spread_zscore(spread)
