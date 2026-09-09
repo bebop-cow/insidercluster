@@ -18,3 +18,10 @@ def build(years=20):
 	df = pd.concat([teny,spy], axis=1, sort=True)
 	df.columns = ["y10", "SPY"]
 	return df.dropna()
+
+
+def main():
+	print(build().tail())
+
+if __name__ == '__main__':
+	main()
