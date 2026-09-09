@@ -13,11 +13,16 @@ def fetch_close(ticker, period="20y"):
 
 def build(years=20):
 	teny = fetch_series("DGS10")
-	ticker = fetch_close("SPY")
+	spy = fetch_close("SPY")
 	spy.index = spy.index.tz_localize(None)
 	df = pd.concat([teny,spy], axis=1, sort=True)
 	df.columns = ["y10", "SPY"]
 	return df.dropna()
+
+def flag_regime(df, window=100):
+	ma = df["y10"].rolling(window).mean()
+	df["rising"] = df["y10"] > ma
+	return df
 
 
 def main():
