@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import yfinance as yf
 
 from garch import get_returns, fit_garch, forecast_vol, tail_risk, fetch_close
 from iv import current_atm_iv
@@ -88,7 +89,8 @@ st.metric("Suggested size multiplier", f"{size_mult:.2f}x")
 st.caption("Markers describe the environment. They do not predict direction.")
 
 def detect_structure(ticker, months=6):
-	closes = get_closes(tickers, months)
+	tk = yf.Ticker(ticker)
+	closes = tk.history(period=f"{months}mo")["Close"]
 	if closes is None:
 		return None
 	hi = closes.max()
@@ -101,16 +103,16 @@ def detect_structure(ticker, months=6):
 	near_high = last >= hi * 0.99
 	near_low = last <= lo * 1.01
 	return {"last": last, "hi":hi, "lo": lo, "pos":pos_in_range,
-			"mas50": ma50, "above_ma":above_ma, 
-			"near_high": near_high, "near_low":near_lowe}
+			"ma50": ma50, "above_ma":above_ma, 
+			"near_high": near_high, "near_low":near_low, "closes":closes}
 
-	st.header("Structure")
-	s = detect_structure(ticker)
-	c1, c2, c3 = st.columns(3)
-	c1.metric("Support", f"${s['lo']:.2f}")
-	c2.metric("Resistance", f"${s['hi']:.2f}")
-	c3.metric("Position in range", f"${s['pos']*100:.0f}%")
-	st.write("• Trend: " + ("above 50d MA" if s["above_ma"] else "below 50d MA"))
-	if s["near_high"]: st.write("• At/near 6mo HIGH")
-	if s["near_low"]:  st.write("• At/near 6mo LOW")
-	st.line_chart(get_closes(ticker, 6))
+st.header("Structure")
+s = detect_structure(ticker)
+c1, c2, c3 = st.columns(3)
+c1.metric("Support", f"${s['lo']:.2f}")
+c2.metric("Resistance", f"${s['hi']:.2f}")
+c3.metric("Position in range", f"{s['pos']*100:.0f}%")
+st.write("• Trend: " + ("above 50d MA" if s["above_ma"] else "below 50d MA"))
+if s["near_high"]: st.write("• At/near 6mo HIGH")
+if s["near_low"]:  st.write("• At/near 6mo LOW")
+st.line_chart(s["closes"])
