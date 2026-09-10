@@ -119,6 +119,16 @@ def main():
 			count = len(vals)
 			print(f"{buck:7} {tk:5} avg {combined:+.2f}%  (n={count})")
 
+	V_DATES = ["2026-08-12", "2026-07-14", "2026-06-10", "2026-05-12"]
+
+	for d in V_DATES:
+		r1 = reaction("V", d, 1)
+		r7 = reaction("V", d, 7)
+		if r1 is None or r7 is None:
+			print(f"{d}: no data")
+			continue
+		print(f"{d}:  +1d {r1:+.2f}%   +7d {r7:+.2f}%")
+
 
 if __name__ == '__main__':
 	main()
