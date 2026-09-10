@@ -57,3 +57,31 @@ c1, c2, c3 = st.columns(3)
 c1.metric("Spot", f"${spot:.2f}")
 c2.metric("99% worst 5d (fat-tail)", f"-${t_move:.2f}")
 c3.metric("nu (tail fatness)", f"{nu:.1f}", "fat tails" if nu < 6 else "moderate")
+
+st.header("Stance")
+
+notes = []
+size_mult = 1.0
+
+if rising:
+    notes.append("Rates RISING — headwind. Reduce directional risk.")
+    size_mult *= 0.7
+else:
+    notes.append("Rates FALLING — tailwind. Normal risk budget.")
+
+if spread and spread > 5:
+    notes.append(f"Premium RICH ({spread:+.1f}%) — favor selling vol.")
+elif spread and spread < 0:
+    notes.append(f"Premium CHEAP ({spread:+.1f}%) — favor buying vol/protection.")
+else:
+    notes.append("Premium fair — no strong vol edge.")
+
+if nu < 5:
+    notes.append(f"FAT tails (nu {nu:.1f}) — size down, respect gap risk.")
+    size_mult *= 0.7
+
+for n in notes:
+    st.write("• " + n)
+
+st.metric("Suggested size multiplier", f"{size_mult:.2f}x")
+st.caption("Markers describe the environment. They do not predict direction.")
