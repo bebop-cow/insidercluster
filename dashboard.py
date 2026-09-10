@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
+from scipy.signal import find_peaks
 from garch import get_returns, fit_garch, forecast_vol, tail_risk, fetch_close
 from iv import current_atm_iv
 
@@ -105,6 +106,26 @@ def detect_structure(ticker, months=6):
 	return {"last": last, "hi":hi, "lo": lo, "pos":pos_in_range,
 			"ma50": ma50, "above_ma":above_ma, 
 			"near_high": near_high, "near_low":near_low, "closes":closes}
+
+def detect_double(closes, tolerance=0.03):
+    prices = closes.values
+    peaks, _ = find_peaks(prices, distance=10)      # local maxima, 10 days apart min
+    troughs, _ = find_peaks(-prices, distance=10)   # local minima
+
+    double_top = False
+    if len(peaks) >= 2:
+        top2 = sorted(prices[peaks])[-2:]           # two highest peaks
+        if abs(top2[0] - top2[1]) / top2[1] < tolerance:
+            double_top = True
+
+    double_bottom = False
+    if len(troughs)>=2:
+    	top2 = sorted(prices[troughs])[:2]
+    	if abs(top2[0] - top2[1]) / top2[1] < tolerance:
+    		double_bottom = True
+
+
+    return double_top, double_bottom
 
 st.header("Structure")
 s = detect_structure(ticker)
