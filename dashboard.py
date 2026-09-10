@@ -86,3 +86,31 @@ for n in notes:
 
 st.metric("Suggested size multiplier", f"{size_mult:.2f}x")
 st.caption("Markers describe the environment. They do not predict direction.")
+
+def detect_structure(ticker, months=6):
+	closes = get_closes(tickers, months)
+	if closes is None:
+		return None
+	hi = closes.max()
+	lo = closes.min()
+	last = closes.iloc[-1]
+	pos_in_range = (last - lo) / (hi - lo)
+	ma50 = closes.rolling(50).mean().iloc[-1]
+	above_ma = last >ma50
+	# breakout is today with 1% pf the window?
+	near_high = last >= hi * 0.99
+	near_low = last <= lo * 1.01
+	return {"last": last, "hi":hi, "lo": lo, "pos":pos_in_range,
+			"mas50": ma50, "above_ma":above_ma, 
+			"near_high": near_high, "near_low":near_lowe}
+
+	st.header("Structure")
+	s = detect_structure(ticker)
+	c1, c2, c3 = st.columns(3)
+	c1.metric("Support", f"${s['lo']:.2f}")
+	c2.metric("Resistance", f"${s['hi']:.2f}")
+	c3.metric("Position in range", f"${s['pos']*100:.0f}%")
+	st.write("• Trend: " + ("above 50d MA" if s["above_ma"] else "below 50d MA"))
+	if s["near_high"]: st.write("• At/near 6mo HIGH")
+	if s["near_low"]:  st.write("• At/near 6mo LOW")
+	st.line_chart(get_closes(ticker, 6))
