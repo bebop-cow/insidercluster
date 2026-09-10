@@ -16,11 +16,12 @@ def get_rate_regime(series_id="DGS10", window=100):
 	y10 = pd.to_numeric(df[series_id], errors = "coerce")
 	ma = y10.rolling(window).mean()
 	rising = y10.iloc[-1] > ma.iloc[-1]
-	return y10.iloc[-1], rising
-
-
-level, rising = get_rate_regime()
-st.metric("10Y Yield", f"{level:.2f}%", "RISING (headwind)" if rising else "FALLING (tailwind)")
+	return y10.iloc[-1], rising, ma.iloc[-1], y10.iloc[-1] - y10.iloc[-21]
+	
+level, rising, ma, chg_1m = get_rate_regime()
+st.metric("10Y Yield", f"{level:.2f}%",
+          f"{chg_1m:+.2f}% (1mo)")
+st.caption(f"100d MA: {ma:.2f}%  →  {'RISING (headwind)' if rising else 'FALLING (tailwind)'}")
 
 st.header("Vol Regime")
 ticker = st.text_input("Ticker", "SPY").upper()
