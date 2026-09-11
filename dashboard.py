@@ -5,11 +5,14 @@ import yfinance as yf
 import talib
 
 from scipy.signal import find_peaks
-from garch import get_returns, fit_garch, forecast_vol, tail_risk, fetch_close
+from garch import get_returns, fit_garch, forecast_vol, tail_risk
 from iv import current_atm_iv
 
 
 st.title("Lazuli Capital - Regime Dashboard")
+
+def fetch_close(ticker, period="10y"):
+	return yf.Ticker(ticker).history(period="10y")["Close"].tz_localize(None).dropna()
 
 
 @st.cache_data(ttl=3600) 
@@ -145,9 +148,13 @@ if not (dt or db): st.write("• No double top/bottom detected")
 
 
 def detect_candles(ticker, months=3):
-    tk = yf.Ticker(ticker)
-    df = tk.history(period=f"{months}mo").dropna()      # note the .dropna() reflex
-    o, h, l, c = df["Open"], df["High"], df["Low"], df["Close"]
+	tk = yf.Ticker(ticker)
+    df = tk.history(period=f"{months}mo").dropna()
+    o = df["Open"].values.astype(float)
+    h = df["High"].values.astype(float)
+    l = df["Low"].values.astype(float)
+    c = df["Close"].values.astype(float)
+
 
     patterns = {
         "Doji": talib.CDLDOJI(o, h, l, c),
@@ -157,10 +164,15 @@ def detect_candles(ticker, months=3):
         "Morning Star": talib.CDLMORNINGSTAR(o, h, l, c),
         "Evening Star": talib.CDLEVENINGSTAR(o, h, l, c),
     }
+
+    doji = talib.CDLDOJI(o, h, l, c)
+    print("DEBUG doji nonzero count:", (doji != 0).sum())   # how many bars fired, ever
+    print("DEBUG last 5 doji:", doji[-5:])
+    
     # check the most recent bar for each
     found = []
     for name, series in patterns.items():
-        val = series.iloc[-1]
+        val = series[-1]
         if val != 0:
             found.append((name, "bullish" if val > 0 else "bearish"))
     return found
