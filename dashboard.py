@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import talib
 
 from scipy.signal import find_peaks
 from garch import get_returns, fit_garch, forecast_vol, tail_risk, fetch_close
@@ -91,7 +92,7 @@ st.caption("Markers describe the environment. They do not predict direction.")
 
 def detect_structure(ticker, months=6):
 	tk = yf.Ticker(ticker)
-	closes = tk.history(period=f"{months}mo")["Close"]
+	closes = tk.history(period=f"{months}mo")["Close"].dropna()
 	if closes is None:
 		return None
 	hi = closes.max()
@@ -120,10 +121,9 @@ def detect_double(closes, tolerance=0.03):
 
     double_bottom = False
     if len(troughs)>=2:
-    	top2 = sorted(prices[troughs])[:2]
-    	if abs(top2[0] - top2[1]) / top2[1] < tolerance:
+    	low2 = sorted(prices[troughs])[:2]
+    	if abs(low2[0] - low2[1]) / low2[1] < tolerance:
     		double_bottom = True
-
 
     return double_top, double_bottom
 
@@ -137,3 +137,30 @@ st.write("• Trend: " + ("above 50d MA" if s["above_ma"] else "below 50d MA"))
 if s["near_high"]: st.write("• At/near 6mo HIGH")
 if s["near_low"]:  st.write("• At/near 6mo LOW")
 st.line_chart(s["closes"])
+
+dt, db = detect_double(s["closes"])
+if dt: st.write("• Possible DOUBLE TOP ")
+if db: st.write("• Possible DOUBLE BOTTOM")
+if not (dt or db): st.write("• No double top/bottom detected")
+
+
+def detect_candles(ticker, months=3):
+    tk = yf.Ticker(ticker)
+    df = tk.history(period=f"{months}mo").dropna()      # note the .dropna() reflex
+    o, h, l, c = df["Open"], df["High"], df["Low"], df["Close"]
+
+    patterns = {
+        "Doji": talib.CDLDOJI(o, h, l, c),
+        "Hammer": talib.CDLHAMMER(o, h, l, c),
+        "Shooting Star": talib.CDLSHOOTINGSTAR(o, h, l, c),
+        "Bullish Engulfing": talib.CDLENGULFING(o, h, l, c),
+        "Morning Star": talib.CDLMORNINGSTAR(o, h, l, c),
+        "Evening Star": talib.CDLEVENINGSTAR(o, h, l, c),
+    }
+    # check the most recent bar for each
+    found = []
+    for name, series in patterns.items():
+        val = series.iloc[-1]
+        if val != 0:
+            found.append((name, "bullish" if val > 0 else "bearish"))
+    return found
