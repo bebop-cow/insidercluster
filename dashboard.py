@@ -164,3 +164,10 @@ def detect_candles(ticker, months=3):
         if val != 0:
             found.append((name, "bullish" if val > 0 else "bearish"))
     return found
+
+candles = detect_candles(ticker, 3)
+if candles:
+    for name, direction in candles:
+        st.write(f"• Candlestick: {name} ({direction}) — suggestive only")
+else:
+    st.write("• No candlestick pattern on latest bar")
