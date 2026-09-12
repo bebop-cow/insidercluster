@@ -7,12 +7,28 @@ import talib
 from scipy.signal import find_peaks
 from garch import get_returns, fit_garch, forecast_vol, tail_risk
 from iv import current_atm_iv
+from twos10s30s import fetch_jgb_daily
 
 
 st.title("Lazuli Capital - Regime Dashboard")
 
+def week_delta(series):
+	if len(series) < 6:
+		return 0.0
+	return series.iloc[-1] - series.iloc[-6] #now vs ~1 week ago
+
 def fetch_close(ticker, period="10y"):
 	return yf.Ticker(ticker).history(period="10y")["Close"].tz_localize(None).dropna()
+
+@st.cache_data(ttl=3600)
+def get_oil():
+    s = yf.Ticker("USO").history(period="1mo")["Close"].dropna()
+    return s.iloc[-1], week_delta(s)
+
+@st.cache_data(ttl=3600)
+def get_jgb():
+    s = fetch_jgb_daily().dropna()      # your MOF function
+    return s.iloc[-1], week_delta(s)
 
 
 @st.cache_data(ttl=3600) 
@@ -24,10 +40,18 @@ def get_rate_regime(series_id="DGS10", window=100):
 	rising = y10.iloc[-1] > ma.iloc[-1]
 	return y10.iloc[-1], rising, ma.iloc[-1], y10.iloc[-1] - y10.iloc[-21]
 
-level, rising, ma, chg_1m = get_rate_regime()
-st.metric("10Y Yield", f"{level:.2f}%",
-          f"{chg_1m:+.2f}% (1mo)")
-st.caption(f"100d MA: {ma:.2f}%  →  {'RISING (headwind)' if rising else 'FALLING (tailwind)'}")
+
+st.header("Macro")
+m1, m2, m3 = st.columns(3)
+
+level, rising, ma, chg = get_rate_regime()
+m1.metric("US 10Y", f"{level:.2f}%", f"{chg:+.2f}% (1mo)")
+
+oil_px, oil_chg = get_oil()
+m2.metric("Oil (USO)", f"${oil_px:.2f}", f"{oil_chg:+.2f} (1wk)")
+
+jgb_px, jgb_chg = get_jgb()
+m3.metric("Japan 10Y", f"{jgb_px:.2f}%", f"{jgb_chg:+.2f} (1wk)")
 
 st.header("Vol Regime")
 ticker = st.text_input("Ticker", "SPY").upper()
@@ -148,7 +172,12 @@ if not (dt or db): st.write("• No double top/bottom detected")
 
 
 def detect_candles(ticker, months=3):
-	tk = yf.Ticker(ticker)
+    # tk = yf.Ticker(ticker)
+    # df = tk.history(period=f"{months}mo").dropna()      # note the .dropna() reflex
+    # o, h, l, c = df["Open"], df["High"], df["Low"], df["Close"]
+
+
+    tk = yf.Ticker(ticker)
     df = tk.history(period=f"{months}mo").dropna()
     o = df["Open"].values.astype(float)
     h = df["High"].values.astype(float)
