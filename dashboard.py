@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import talib
+import requests
 
 from scipy.signal import find_peaks
 from garch import get_returns, fit_garch, forecast_vol, tail_risk
@@ -52,6 +53,21 @@ m2.metric("Oil (USO)", f"${oil_px:.2f}", f"{oil_chg:+.2f} (1wk)")
 
 jgb_px, jgb_chg = get_jgb()
 m3.metric("Japan 10Y", f"{jgb_px:.2f}%", f"{jgb_chg:+.2f} (1wk)")
+
+@st.cache_data(ttl=3600)
+def get_congress(ticker, limit=10):
+    url = "https://www.bargo.ai/free-apis/congress/v1/trades"
+    headers = {"User-Agent": "Lazuli Research tyrin@example.com"}
+    try:
+        r = requests.get(url, params={"ticker": ticker}, headers=headers, timeout=20)
+        trades = r.json().get("trades", [])[:limit]
+        out = []
+        for t in trades:
+            out.append((t.get("member"), t.get("type"), t.get("amount_range"),
+                        t.get("transaction_date", "?")))
+        return out
+    except Exception:
+        return []
 
 st.header("Vol Regime")
 ticker = st.text_input("Ticker", "SPY").upper()
