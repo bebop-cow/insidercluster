@@ -17,7 +17,7 @@ def probe_congress():
     try:
         r = requests.get(url, params={"ticker": "NVDA"}, headers=HEADERS, timeout=20)
         print("\nCongress status:", r.status_code)
-        print("Congress sample:", str(r.json())[:300])
+        print(r.json()["trades"][0])
     except Exception as e:
         print("\nCongress FAILED:", e)
 

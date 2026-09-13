@@ -69,6 +69,15 @@ def get_congress(ticker, limit=10):
     except Exception:
         return []
 
+st.header("Congress Trades")
+trades = get_congress(ticker)
+if trades:
+    for member, ttype, amount, date in trades:
+        emoji = "🟢" if ttype == "purchase" else "🔴"
+        st.write(f"{emoji} {member} — {ttype} {amount} ({date})")
+else:
+    st.write("• No congressional trades on file for this ticker")
+
 st.header("Vol Regime")
 ticker = st.text_input("Ticker", "SPY").upper()
 @st.cache_data(ttl=3600)
