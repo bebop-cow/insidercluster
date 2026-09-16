@@ -1,2 +1,5 @@
 trades.csv
 venv/
+.env
+__pycache__/
+*.csv

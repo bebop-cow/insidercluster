@@ -156,13 +156,9 @@ def check_hit(price_df, entry_date, window_end, strike, cp):
         matches = window[window["Close"] <= strike]
 
     if len(matches) > 0:
-        hit = True
-        date_hit = matches.index[0].strftime("%Y-%m-%d")
+        return True, matches.index[0].strftime("%Y-%m-%d")
 
-    hit = False
-    date_hit = None
-
-    return hit, date_hit
+    return False, None
 
 
 def main():
