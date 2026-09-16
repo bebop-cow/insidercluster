@@ -9,6 +9,7 @@ from scipy.signal import find_peaks
 from garch import get_returns, fit_garch, forecast_vol, tail_risk
 from iv import current_atm_iv
 from twos10s30s import fetch_jgb_daily
+from insidercluster_v6 import fetch_recent_form4, analyze
 
 
 
@@ -58,6 +59,13 @@ def get_congress(ticker, limit=10):
         return out
     except Exception:
         return []
+
+@st.cache_data(ttl=3600)      # slow — cache an hour
+def get_insiders():
+    filings = fetch_recent_form4()
+    buy_rows, sell_rows = analyze(filings)
+    return buy_rows, sell_rows
+
 @st.cache_data(ttl=3600)
 def get_congress_latest(limit=15):
     url = "https://www.bargo.ai/free-apis/congress/v1/trades"
@@ -166,6 +174,36 @@ jgb_px, jgb_chg = get_jgb()
 m3.metric("Japan 10Y", f"{jgb_px:.2f}%", f"{jgb_chg:+.2f} (1wk)")
 st.caption(f"10Y vs 100d MA {ma:.2f}% → {'RISING (headwind)' if rising else 'FALLING (tailwind)'}")
 
+# ── Congress trades ──
+st.header("Congress Trades")
+trades = get_congress(ticker)
+if trades:
+    buys = sum(1 for t in trades if t[1] == "purchase")
+    sells = len(trades) - buys
+    st.caption(f"{buys} buys / {sells} sells on file (disclosure lags up to 45d)")
+    for member, ttype, amount, tdate, ddate in trades:
+        emoji = "🟢" if ttype == "purchase" else "🔴"
+        st.write(f"{emoji} {member} — {ttype} {amount}  ·  traded {tdate}, disclosed {ddate}")
+else:
+    st.write("• No congressional trades on file for this ticker")
+
+# -- Insider Activity --
+
+st.header("Insider Activity")
+buy_rows, sell_rows = get_insiders()
+
+st.subheader("Buy signals")
+if buy_rows:
+    buy_df = pd.DataFrame([
+        {"Ticker": r["ticker"], "Company": r["company"][:30],
+         "Insiders": r["insiders"], "Total $": f"${r['total']:,.0f}",
+         "Tag": r["tag"], "Score": round(r["score"], 1)}
+        for r in buy_rows
+    ])
+    st.dataframe(buy_df, hide_index=True)
+else:
+    st.write("No buy signals in window")
+
 # ── Vol regime ──
 st.header("Vol Regime")
 garch_annual, iv_annual, spread = get_vol_regime(ticker)
@@ -205,18 +243,7 @@ if candles:
 else:
     st.write("• No candlestick pattern on latest bar")
 
-# ── Congress trades ──
-st.header("Congress Trades")
-trades = get_congress(ticker)
-if trades:
-    buys = sum(1 for t in trades if t[1] == "purchase")
-    sells = len(trades) - buys
-    st.caption(f"{buys} buys / {sells} sells on file (disclosure lags up to 45d)")
-    for member, ttype, amount, tdate, ddate in trades:
-        emoji = "🟢" if ttype == "purchase" else "🔴"
-        st.write(f"{emoji} {member} — {ttype} {amount}  ·  traded {tdate}, disclosed {ddate}")
-else:
-    st.write("• No congressional trades on file for this ticker")
+
 
 # ── Stance (synthesized) ──
 st.header("Stance")
