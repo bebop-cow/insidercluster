@@ -63,8 +63,7 @@ def get_congress(ticker, limit=10):
 @st.cache_data(ttl=3600)      # slow — cache an hour
 def get_insiders():
     filings = fetch_recent_form4()
-    buy_rows, sell_rows = analyze(filings)
-    return buy_rows, sell_rows
+    return analyze(filings)
 
 @st.cache_data(ttl=3600)
 def get_congress_latest(limit=15):
@@ -161,7 +160,6 @@ st.title("Lazuli Capital — Regime Dashboard")
 
 # ticker input FIRST so every section below can use it
 ticker = st.text_input("Ticker", "SPY").upper()
-st.write("✓ page started") 
 
 # ── Macro row ──
 st.header("Macro")
@@ -196,13 +194,25 @@ st.subheader("Buy signals")
 if buy_rows:
     buy_df = pd.DataFrame([
         {"Ticker": r["ticker"], "Company": r["company"][:30],
-         "Insiders": r["insiders"], "Total $": f"${r['total']:,.0f}",
-         "Tag": r["tag"], "Score": round(r["score"], 1)}
+         "Insiders": r["insiders"], "Total $": f"${r['total']:,.0f}", 
+         "Tag": r["tag"], "Traded": r["last_date"]}
         for r in buy_rows
     ])
     st.dataframe(buy_df, hide_index=True)
 else:
     st.write("No buy signals in window")
+
+st.subheader("Sells (watchlist)")
+if sell_rows:
+    sell_df = pd.DataFrame([
+        {"Ticker": r["ticker"], "Company": r["company"][:28],
+         "Sellers": r["sellers"], "Total Sold ($M)": round(r['total_sell']/1e6, 1),
+         "Traded": r["last_date"]}
+        for r in sell_rows
+    ])
+    st.dataframe(sell_df, hide_index=True)
+else:
+    st.write("No sell clusters in window")
 
 # ── Vol regime ──
 st.header("Vol Regime")

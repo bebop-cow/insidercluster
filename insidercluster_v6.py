@@ -179,8 +179,16 @@ def analyze(filings):
         all_buys = [b for lst in buyers.values() for b in lst]
         all_sells = [s for lst in sellers.values() for s in lst]
         dates = [b["date"] for b in all_buys if b["date"]]
-        first_buy = min(dates) if dates else "continue"
-        last_buy = max(dates) if dates else "continue"
+        
+        # buy dates
+        buy_dates = [b["date"] for b in all_buys if b["date"]]
+        first_buy = min(buy_dates) if buy_dates else "?"
+        last_buy = max(buy_dates) if buy_dates else "?"
+
+        # sell dates  ← ADD THIS
+        sell_dates = [s["date"] for s in all_sells if s["date"]]
+        first_sell = min(sell_dates) if sell_dates else "?"
+        last_sell = max(sell_dates) if sell_dates else "?"
 
         # BUY leaderboard — needs at least one conviction-sized buy
         if any(counts(b["value"]) for b in all_buys):
@@ -189,7 +197,9 @@ def analyze(filings):
             buy_rows.append({"company": company, "ticker": data["ticker"],
                              "insiders": n, "total": total,
                              "score": score(n, total), "tag": tag(n, total),
-                             "owners": buyers})
+                             "owners": buyers,
+                             "first_date": first_buy, "last_date": last_buy,
+                             })
 
         # SELL watchlist — heavy selling AND no offsetting buys (the AMD pattern)
         total_sell = sum(s["value"] for s in all_sells)
@@ -198,7 +208,8 @@ def analyze(filings):
         if total_sell >= SELL_WATCH_MIN_USD and n_buyers == 0:
             sell_rows.append({"company": company, "ticker": data["ticker"],
                               "sellers": n_sellers, "total_sell": total_sell,
-                              "owners": sellers})
+                              "owners": sellers, "first_date": first_sell, "last_date": last_sell,
+                              })
 
     buy_rows.sort(key=lambda r: r["score"], reverse=True)
     sell_rows.sort(key=lambda r: r["total_sell"], reverse=True)
