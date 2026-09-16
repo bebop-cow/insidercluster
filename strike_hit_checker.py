@@ -80,7 +80,7 @@ def load_and_dedupe_positions(csv_path):
 
     Returns a DataFrame with columns: ticker, cp, strike, entry_date
     """
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, skipfooter=2, engine="python")
 
     def money(x):
         if pd.isna(x):
@@ -111,11 +111,9 @@ def load_and_dedupe_positions(csv_path):
     # keep only the OPENING legs (BTO/STO) - that's the entry date/price
     opens = df[df["Trans Code"].isin(["BTO", "STO"])].copy()
 
-    # TODO (you): group by (ticker, cp, strike) and take the EARLIEST
-    # entry_date per group. Also grab that earliest row's price as
-    # entry_price. Hint: sort by date, then groupby(...).first()
-    positions = None  # <-- replace this
-
+    opens = opens.sort_values("date")
+    positions = opens.groupby(["ticker", "cp", "strike"]).first().reset_index()
+    positions = positions.rename(columns={"date": "entry_date", "price": "entry_price"})
     return positions
 
 
@@ -152,11 +150,14 @@ def check_hit(price_df, entry_date, window_end, strike, cp):
     if window.empty:
         return False, None
 
-    # TODO (you): for a CALL, "hit" means Close >= strike on some day.
-    #             for a PUT,  "hit" means Close <= strike on some day.
-    # Find the FIRST day (earliest date) where that's true.
-    # Hint: filter `window` down to the matching rows, then check if
-    # there are any; if so, take the first one's index (the date).
+    if cp == "Call":
+        matches = window[window["Close"] >= strike]
+    else:  # Put
+        matches = window[window["Close"] <= strike]
+
+    if len(matches) > 0:
+        hit = True
+        date_hit = matches.index[0].strftime("%Y-%m-%d")
 
     hit = False
     date_hit = None
@@ -199,9 +200,15 @@ def main():
             })
             continue
 
-        # TODO (you): call check_hit() TWICE - once with window_3mo_end,
-        # once with window_6mo_end. Store both results.
-        # Build the row dict and append it to `results`.
+        hit3, date3 = check_hit(price_df, entry_date, window_3mo_end, strike, cp)
+        hit6, date6 = check_hit(price_df, entry_date, window_6mo_end, strike, cp)
+
+        results.append({
+            "ticker": ticker, "cp": cp, "strike": strike,
+            "entry_date": entry_date.date(),
+            "hit_in_3mo": "Yes" if hit3 else "No", "date_hit_3mo": date3,
+            "hit_in_6mo": "Yes" if hit6 else "No", "date_hit_6mo": date6,
+        })
 
     out = pd.DataFrame(results)
     out_path = "strike_hit_results.csv"

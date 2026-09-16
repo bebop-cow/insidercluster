@@ -153,6 +153,7 @@ st.title("Lazuli Capital — Regime Dashboard")
 
 # ticker input FIRST so every section below can use it
 ticker = st.text_input("Ticker", "SPY").upper()
+st.write("✓ page started") 
 
 # ── Macro row ──
 st.header("Macro")
