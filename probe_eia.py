@@ -13,6 +13,7 @@ def probe_refinery():
         "api_key": KEY,
         "frequency": "weekly",
         "data[0]": "value",
+        "facets[series][]": "WPULEUS3", 
         "sort[0][column]": "period",
         "sort[0][direction]": "desc",
         "length": 5,          # just the 5 most recent
