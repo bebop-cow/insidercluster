@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-KEY = os.getenv("EIA_KEY")
+EIA_KEY = os.getenv("EIA_KEY")
 
 def week_delta(series):
     if len(series) < 6:
@@ -104,6 +104,15 @@ def get_tail(ticker):
     t_move, n_move = tail_risk(fitted, spot, 5, 0.99)
     nu = fitted.params["nu"]
     return spot, t_move, n_move, nu
+
+def rsi(closes, window=14):
+    delta = closes.diff()
+    gains = delta.clip(lower=0)
+    losses = -delta.clip(uppers=0)
+    avg_gain = gains.rolling(window).mean()
+    avg_losses = losses.rolling(window).mean()
+    rs = avg_gain / avg_losses
+    return(100 -100/(1+rs)).iloc[-1]
 
 
 @st.cache_data(ttl=3600)
@@ -254,6 +263,11 @@ c1, c2, c3 = st.columns(3)
 c1.metric("Spot", f"${spot:.2f}")
 c2.metric("99% worst 5d (fat-tail)", f"-${t_move:.2f}")
 c3.metric("nu (tail fatness)", f"{nu:.1f}", "fat tails" if nu < 6 else "moderate")
+
+# -- RSI --
+r = rsi(s["closes"])
+label = "OVERBOUGHT" if r >= 70 else ("OVERSOLD" if r <= 30 else "neutral")
+st.write(f"• RSI(14): {r:.1f} - {label}")
 
 # ── Structure ──
 st.header("Structure")

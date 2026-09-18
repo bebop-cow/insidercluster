@@ -34,14 +34,14 @@ def rsi(closes, window=14):
 def main():
 	ticker = sys.argv[1].upper() if len(sys.argv) > 1 else DEFAULT_TICKER
 	closes = get_closes(ticker)
-    rolling = rsi(closes, 14)
-        print(f"{ticker} RSI: {rolling:.1f}")
-    if rolling >= 70:
-        print("  OVERBOUGHT")
-    elif rolling <= 30:
-        print("  OVERSOLD")
-    else:
-        print("  neutral")
+	rolling = rsi(closes, 14)
+	print(f"{ticker} RSI: {rolling:.1f}")
+	if rolling >= 70:
+		print("  OVERBOUGHT")
+	elif rolling <= 30:
+		print("  OVERSOLD")
+	else:
+		print("  neutral")
 
 if __name__ == '__main__':
 	main()
