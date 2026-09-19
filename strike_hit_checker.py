@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-STRIKE HIT CHECKER · v1
+STRIKE HIT CHECKER · v2
 ================================================================
 THE QUESTION:
   For every option position you actually traded, if you had instead
@@ -156,9 +156,11 @@ def check_hit(price_df, entry_date, window_end, strike, cp):
         matches = window[window["Close"] <= strike]
 
     if len(matches) > 0:
-        return True, matches.index[0].strftime("%Y-%m-%d")
+        hit_date = matches.index[0]
+        days = (hit_date - entry_date).days
+        return True, hit_date.strftime("%Y-%m-%d")
 
-    return False, None
+    return False, None, None
 
 
 def main():
@@ -196,24 +198,28 @@ def main():
             })
             continue
 
-        hit3, date3 = check_hit(price_df, entry_date, window_3mo_end, strike, cp)
-        hit6, date6 = check_hit(price_df, entry_date, window_6mo_end, strike, cp)
+        hit3, date3, days3 = check_hit(price_df, entry_date, window_3mo_end, strike, cp)
+        hit6, date6, days6 = check_hit(price_df, entry_date, window_6mo_end, strike, cp)
 
         results.append({
             "ticker": ticker, "cp": cp, "strike": strike,
             "entry_date": entry_date.date(),
             "hit_in_3mo": "Yes" if hit3 else "No", "date_hit_3mo": date3,
             "hit_in_6mo": "Yes" if hit6 else "No", "date_hit_6mo": date6,
+            "days_to_hit_3mo": days3,
+            "days_to_hit_6mo": days6,
         })
 
     out = pd.DataFrame(results)
     out_path = "strike_hit_results.csv"
     out.to_csv(out_path, index=False)
+    hit3_days = out["days_to_hit_3mo"].dropna()
+    hit6_days = out["days_to_hit_6mo"].dropna()
+    print(f"Avg days to hit (3mo window): {hit3_days.mean():.1f}  (median {hit3_days.median():.0f}, n={len(hit3_days)})")
+    print(f"Avg days to hit (6mo window): {hit6_days.mean():.1f}  (median {hit6_days.median():.0f}, n={len(hit6_days)})")
     print(f"\nWrote {len(out)} rows to {out_path}")
 
-    # TODO (you, optional): print a quick summary -
-    # what % hit in 3mo? what % hit in 6mo (that didn't hit in 3mo)?
-
+    
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,4 @@
-trades.csv
-venv/
-.env
-__pycache__/
 *.csv
-strike_hit_results.csv
 venv/
 __pycache__/
 *.pyc
