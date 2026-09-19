@@ -148,7 +148,7 @@ def check_hit(price_df, entry_date, window_end, strike, cp):
     window = price_df[(price_df.index >= entry_date) &
                       (price_df.index <= window_end)]
     if window.empty:
-        return False, None
+        return False, None, None
 
     if cp == "Call":
         matches = window[window["Close"] >= strike]
@@ -158,7 +158,7 @@ def check_hit(price_df, entry_date, window_end, strike, cp):
     if len(matches) > 0:
         hit_date = matches.index[0]
         days = (hit_date - entry_date).days
-        return True, hit_date.strftime("%Y-%m-%d")
+        return True, hit_date.strftime("%Y-%m-%d"), days
 
     return False, None, None
 
