@@ -21,7 +21,6 @@ def get_closes(ticker, years = 3):
 	return closes
 
 def rsi(closes, window=14):
-
 	delta = closes.diff()
 	gains = delta.clip(lower=0)
 	loses = -delta.clip(upper=0)
