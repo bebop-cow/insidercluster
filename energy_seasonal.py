@@ -17,7 +17,7 @@ def monthly_returns(ticker, years=6):
 
 
 
-def seasonal(ticker, years=6):
+def seasonal(ticker, years=12):
     rets = monthly_returns(ticker,years)
     means = rets.groupby(rets.index.month).mean()
     medians = rets.groupby(rets.index.month).median()
@@ -26,6 +26,6 @@ def seasonal(ticker, years=6):
     return means, medians, hit_rate, counts
 
 
-groups, counts = seasonal("XLE")
+means, medians, hit_rate, counts = seasonal("xom")
 for month in range(1, 13):
-    print(f"month {month:2d}: {means[month]:+.2f}%, {medians[month]: +:.2f}%, {hit_rate: +:.2f}%, (n={counts[month]})")
+    print(f"month {month:2d}: mean {means[month]:+.2f}%  median {medians[month]:+.2f}%  hit {hit_rate[month]:.0f}%  (n={counts[month]})")
