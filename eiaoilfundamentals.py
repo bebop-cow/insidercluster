@@ -22,26 +22,12 @@ def get_eia_series(series_id,route, n=8):
 	return [(row["period"], float(row["value"])) for row in rows]
 
 def main():
-	print("crude stocks:", get_eia_series("WCESTUS1", "stoc/wstk"))
-	print("production:", get_eia_series("WCRFPUS2", "sum/sndw"))
-	# data = get_eia_series("WCESTUS1")
-	# latest = data[0][1]
-	# prev = data[1][1]
-	# change = latest - prev
-	# if change < 0:
-	# 	print(f"{change} week over week - DRAW(bullish)")
-	# else:
-	# 	print(f"{change} week over week - BUILD(bearish)")
-
-	# prod = get_eia_series("WCRFPUS2")
-	# print("DEBUG prod:", prod)      # is it empty, or an error?
-	# prod_now = prod[0][1]
-	# prod_prev = prod[1][1]
-	# prod_chg = prod_now - prod_prev
-	# # rising production = MORE supply = bearish
-	# label = "RISING (bearish)" if prod_chg > 0 else "FALLING (bullish)"
-	# print(f"Production: {prod_now:,.0f} kbbl/d  ({prod_chg:+,.0f} wk) — {label}")
-
+	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
+	prod = get_eia_series("WCRFPUS2", "sum/sndw")
+	stock_chg = stocks[0][1] - stocks[1][1]      # draw/build
+	prod_chg = prod[0][1] - prod[1][1]           # supply direction
+	print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
+	print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
 
 
 if __name__ == '__main__':
