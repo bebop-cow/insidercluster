@@ -6,19 +6,24 @@ load_dotenv()
 
 KEY = os.getenv("EIA_KEY")
 
-def get_eia_series(series_id, n=8):
-	url = "https://api.eia.gov/v2/series_id/{series_id}"
+def get_eia_series(series_id,route, n=8):
+	url = f"https://api.eia.gov/v2/petroleum/{route}/data/"
 	params = {
-    "api_key": KEY,
-	"length": n,          
-	}
+        "api_key": KEY,
+        "frequency": "weekly",
+        "data[0]": "value",
+        "facets[series][]": series_id,
+        "sort[0][column]": "period",
+        "sort[0][direction]": "desc",
+        "length": n,
+    }
 	r = requests.get(url, params=params, timeout=20)
 	rows = r.json()["response"]["data"]
 	return [(row["period"], float(row["value"])) for row in rows]
 
 def main():
-	print("crude stocks:", get_eia_series("WCESTUS1"))
-	print("production:", get_eia_series("WCRFPUS2"))
+	print("crude stocks:", get_eia_series("WCESTUS1", "stoc/wstk"))
+	print("production:", get_eia_series("WCRFPUS2", "sum/sndw"))
 	# data = get_eia_series("WCESTUS1")
 	# latest = data[0][1]
 	# prev = data[1][1]
