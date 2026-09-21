@@ -6,11 +6,11 @@ load_dotenv()
 
 KEY = os.getenv("EIA_KEY")
 
-def get_eia_series(series_id, n=80):
-	url = "https://api.eia.gov/v2/petroleum/stoc/wstk/data/"
+def get_eia_series(series_id, n=8):
+	url = "https://api.eia.gov/v2/series_id/{series_id}"
 	params = {
     "api_key": KEY,
-	"length": n,          # just the 5 most recent
+	"length": n,          
 	}
 	r = requests.get(url, params=params, timeout=20)
 	rows = r.json()["response"]["data"]
