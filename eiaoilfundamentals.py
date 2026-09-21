@@ -24,10 +24,16 @@ def get_eia_series(series_id,route, n=8):
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
 	prod = get_eia_series("WCRFPUS2", "sum/sndw")
-	stock_chg = stocks[0][1] - stocks[1][1]      # draw/build
-	prod_chg = prod[0][1] - prod[1][1]           # supply direction
+	spr =  get_eia_series("WCSSTUS1", "sum/sndw")
+	gasd = get_eia_series("WGFUPUS2", "sum/sndw")
+	stock_chg = stocks[0][1] - stocks[4][1]      # draw/build
+	prod_chg = prod[0][1] - prod[4][1]           # supply direction
+	spr_chg = spr[0][1] - spr[4][1]           # spr direction
+	gasd_chg = gasd[0][1] - gasd[4][1]           # gasoline demand direction
 	print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
 	print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
+	print(f"SPR:  {spr_chg:+,.0f}k/d — {'RISING (bearish)' if spr_chg>0 else 'FALLING (bullish)'}")
+	print(f"Production:  {gasd_chg:+,.0f}k/d — {'RISING (bearish)' if gasd_chg>0 else 'FALLING (bullish)'}")
 
 
 if __name__ == '__main__':
