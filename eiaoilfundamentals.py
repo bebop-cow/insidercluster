@@ -27,10 +27,11 @@ def main():
 	prev = data[1][1]
 	change = latest - prev
 	if change < 0:
-		print("f{change} week over week - DRAW(bullish)")
+		print(f"{change} week over week - DRAW(bullish)")
 	else:
-		print("f{change} week over week - BUILD(bearish)")
-	print(series)
+		print(f"{change} week over week - BUILD(bearish)")
+
+
 
 if __name__ == '__main__':
     	main()    
