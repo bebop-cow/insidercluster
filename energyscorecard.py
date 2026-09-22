@@ -51,25 +51,43 @@ def scorecard():
 		y5trend = "above y5 (uptrend)" if closes.iloc[-1] > y5 else "below y5 (downtrend)"
 		print(f"{name:8} ({tk}): RS vs SPY {rs:+.1f}% · {ma50trend} · {yoytrend} · {y5trend}")
 
-	def nuclear_scan():
-		nuclear = {
-			"Miner": ["CCJ"],
-			"Enrich": ["LEU"],
-			"SMR": ["OKLO", "NNE", "SMR"],
-			"AI-Utility":["CEG", "VST", "TLN"],
-			"Uranium": ["URA", "SRUUF"],
-			}
-		for group, tickers in nuclear.items():
-			for tk in tickers:
-				try:
-					rs = rel_strength(tk)
-					closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
-					ma50 = closes.rolling(50).mean().iloc[-1]
-					trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
-					print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
-				except Exception as e:
-					print(f"{group:11}{tk:6} - no data")
-				
+def nuclear_scan():
+	nuclear = {
+		"Miner": ["CCJ"],
+		"Enrich": ["LEU"],
+		"SMR": ["OKLO", "NNE", "SMR"],
+		"AI-Utility":["CEG", "VST", "TLN"],
+		"Uranium": ["URA", "SRUUF"],
+		}
+	for group, tickers in nuclear.items():
+		for tk in tickers:
+			try:
+				rs = rel_strength(tk)
+				closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+				ma50 = closes.rolling(50).mean().iloc[-1]
+				trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
+				print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
+			except Exception as e:
+				print(f"{group:11}{tk:6} - no data")
+
+def solar_breakdown():
+	solar = {
+		"Solar-ETF": ["TAN"],
+		"Residential": ["RUN", "ENPH", "SEDG"],
+		"Utility-scale": ["FSLR"],
+		"Comparators": ["ICLN", "ARKK", "TLT"],
+	}
+	for group, tickers in solar.items():
+		for tk in tickers:
+			try:
+				rs = rel_strength(tk)
+				closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+				ma50 = closes.rolling(50).mean().iloc[-1]
+				trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
+				print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
+			except Exception as e:
+				print(f"{group:11}{tk:6} - no data")
+			
 
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
@@ -84,7 +102,9 @@ def main():
 	# print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
 	# print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
 	# print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
-	score = scorecard()
+	# score = scorecard()
+	# nuclear = nuclear_scan()
+	solar = solar_breakdown()
 
 
 if __name__ == '__main__':
