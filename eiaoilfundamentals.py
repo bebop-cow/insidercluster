@@ -23,8 +23,20 @@ def get_eia_series(series_id,route, n=8):
 	rows = r.json()["response"]["data"]
 	return [(row["period"], float(row["value"])) for row in rows]
 
-def rel_strength(ticker, months=3):
+def flatten_columns(df):
+	if isinstance(df.columns, pd.MultiIndex):
+		df.columns = df.columns.get_level_values(0)
+	return df
 
+def rel_strength(ticker, months=3):
+	end = pd.Timestamp.now()
+	start = end - pd.DateOffset(months=months)
+	df = yf.download([ticker,"SPY"], start=start.strftime("%Y-%m-%d"),
+		end=end.strftime("%Y-%m-%d"), progress=False)
+	closes = df["Close"].dropna() 
+	tk_ret = (closes[ticker].iloc[-1]/closes[ticker].iloc[0]-1) * 100            
+	spy_ret = (closes["SPY"].iloc[-1]/closes["SPY"].iloc[0]-1) * 100            
+	return tk_ret - spy_ret
 
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
@@ -35,10 +47,11 @@ def main():
 	prod_chg = prod[0][1] - prod[4][1]           # supply direction
 	spr_chg = spr[0][1] - spr[4][1]           # spr direction
 	gasd_chg = gasd[0][1] - gasd[4][1]           # gasoline demand direction
-	print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
-	print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
-	print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
-	print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
+	# print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
+	# print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
+	# print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
+	# print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
+	print(rel_strength("XLE"))
 
 
 if __name__ == '__main__':
