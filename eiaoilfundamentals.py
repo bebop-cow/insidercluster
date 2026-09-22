@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 import requests
+import yfinance as yf
+import pandas as pd
 
 load_dotenv()
 
@@ -21,6 +23,9 @@ def get_eia_series(series_id,route, n=8):
 	rows = r.json()["response"]["data"]
 	return [(row["period"], float(row["value"])) for row in rows]
 
+def rel_strength(ticker, months=3):
+
+
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
 	prod = get_eia_series("WCRFPUS2", "sum/sndw")
@@ -32,8 +37,8 @@ def main():
 	gasd_chg = gasd[0][1] - gasd[4][1]           # gasoline demand direction
 	print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
 	print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
-	print(f"SPR:  {spr_chg:+,.0f}k/d — {'RISING (bearish)' if spr_chg>0 else 'FALLING (bullish)'}")
-	print(f"Production:  {gasd_chg:+,.0f}k/d — {'RISING (bearish)' if gasd_chg>0 else 'FALLING (bullish)'}")
+	print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
+	print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
 
 
 if __name__ == '__main__':
