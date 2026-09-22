@@ -51,6 +51,22 @@ def scorecard():
 		y5trend = "above y5 (uptrend)" if closes.iloc[-1] > y5 else "below y5 (downtrend)"
 		print(f"{name:8} ({tk}): RS vs SPY {rs:+.1f}% · {ma50trend} · {yoytrend} · {y5trend}")
 
+def probe_intl():
+    url = "https://api.eia.gov/v2/international/data/"
+    params = {
+        "api_key": KEY,
+        "frequency": "monthly",
+        "data[0]": "value",
+        "facets[productId][]": "57",      # crude oil (may need adjusting)
+        "facets[activityId][]": "1",      # production
+        "facets[countryRegionId][]": "SAU",   # Saudi Arabia
+        "sort[0][column]": "period",
+        "sort[0][direction]": "desc",
+        "length": 5,
+    }
+    r = requests.get(url, params=params, timeout=20)
+    print(r.json())
+
 def nuclear_scan():
 	nuclear = {
 		"Miner": ["CCJ"],
@@ -94,6 +110,8 @@ def main():
 	prod = get_eia_series("WCRFPUS2", "sum/sndw")
 	spr =  get_eia_series("WCSSTUS1", "sum/sndw")
 	gasd = get_eia_series("WGFUPUS2", "sum/sndw")
+	util = get_eia_series("WPULEUS3", "pnp/wiup")      # % utilization
+	cap  = get_eia_series("WOCLEUS2", "pnp/wiup")      # operable capacity, kbbl/d
 	stock_chg = stocks[0][1] - stocks[4][1]      # draw/build
 	prod_chg = prod[0][1] - prod[4][1]           # supply direction
 	spr_chg = spr[0][1] - spr[4][1]           # spr direction
@@ -103,8 +121,7 @@ def main():
 	# print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
 	# print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
 	# score = scorecard()
-	# nuclear = nuclear_scan()
-	solar = solar_breakdown()
+	
 
 
 if __name__ == '__main__':

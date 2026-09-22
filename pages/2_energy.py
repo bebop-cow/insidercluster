@@ -25,11 +25,15 @@ def oil_fundamentals():
 	prod = get_eia_series("WCRFPUS2", "sum/sndw")
 	spr =  get_eia_series("WCSSTUS1", "sum/sndw")
 	gasd = get_eia_series("WGFUPUS2", "sum/sndw")
+	util = get_eia_series("WPULEUS3", "pnp/wiup")      # % utilization
+	cap  = get_eia_series("WOCLEUS2", "pnp/wiup")      # operable capacity, kbbl/d
 	return {
 		"stock_chg": stocks[0][1] - stocks[4][1],
         "prod_chg":  prod[0][1] - prod[4][1],
         "spr_chg":   spr[0][1] - spr[4][1],
         "gas_chg":   gasd[0][1] - gasd[4][1],
+        "util":      util[0][1],                    # ← current level
+        "cap_chg":   cap[0][1] ,
 	}
 
 st.header("Oil Fundamentals (EIA, 4-week)")
@@ -44,6 +48,11 @@ c3.metric("SPR", f"{f['spr_chg']:+,.0f}k",
           "RELEASING (bearish)" if f['spr_chg'] < 0 else "REFILLING (bullish)")
 c4.metric("Gasoline Demand", f"{f['gas_chg']:+,.0f}k/d",
           "RISING (bullish)" if f['gas_chg'] > 0 else "FALLING (bearish)")
+c5, c6 = st.columns(2)
+c5.metric("Refinery Utilization", f"{f['util']:.1f}%",
+          "near max (tight)" if f['util'] > 92 else "slack")
+c6.metric("Refining Capacity", f"{f['cap_chg']:+,.0f}k/d",
+          "SHRINKING (bullish margins)" if f['cap_chg'] < 0 else "expanding")
 
 
 st.header("Nuclear Basket")

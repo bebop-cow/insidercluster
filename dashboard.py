@@ -130,23 +130,7 @@ def detect_structure(ticker, months=6):
         "near_low": last <= lo * 1.01,
         "closes": closes,
     }
-@st.cache_data(ttl=3600)
-def get_refinery():
-    url = "https://api.eia.gov/v2/petroleum/pnp/wiup/data/"
-    params = {
-        "api_key": EIA_KEY,
-        "frequency": "weekly",
-        "data[0]": "value",
-        "facets[series][]": "WPULEUS3",
-        "sort[0][column]": "period",
-        "sort[0][direction]": "desc",
-        "length": 8,
-    }
-    r = requests.get(url, params=params, timeout=20)
-    rows = r.json()["response"]["data"]
-    latest = float(rows[0]["value"])
-    week_ago = float(rows[1]["value"])      # rows are newest-first
-    return latest, latest - week_ago, rows[0]["period"]
+
 
 
 def detect_double(closes, tolerance=0.03):
@@ -201,8 +185,8 @@ m2.metric("Oil (USO)", f"${oil_px:.2f}", f"{oil_chg:+.2f} (1wk)")
 jgb_px, jgb_chg = get_jgb()
 m3.metric("Japan 10Y", f"{jgb_px:.2f}%", f"{jgb_chg:+.2f} (1wk)")
 st.caption(f"10Y vs 100d MA {ma:.2f}% → {'RISING (headwind)' if rising else 'FALLING (tailwind)'}")
-util, util_chg, util_date = get_refinery()
-st.caption(f"US Refinery Utilization: {util:.1f}% ({util_chg:+.1f} wk) — as of {util_date}")
+
+
 
 
 # ── Congress trades ──
