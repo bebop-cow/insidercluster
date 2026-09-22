@@ -44,3 +44,26 @@ c3.metric("SPR", f"{f['spr_chg']:+,.0f}k",
           "RELEASING (bearish)" if f['spr_chg'] < 0 else "REFILLING (bullish)")
 c4.metric("Gasoline Demand", f"{f['gas_chg']:+,.0f}k/d",
           "RISING (bullish)" if f['gas_chg'] > 0 else "FALLING (bearish)")
+
+
+st.header("Nuclear Basket")
+nuclear = {
+    "Miner": ["CCJ"], "Enrich": ["LEU"],
+    "SMR": ["OKLO", "NNE", "SMR"],
+    "AI-Utility": ["CEG", "VST", "TLN"],
+    "Uranium": ["URA", "SRUUF"],
+}
+rows = []
+for group, tickers in nuclear.items():
+    for tk in tickers:
+        try:
+            rs = rel_strength(tk)
+            closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+            up = closes.iloc[-1] > closes.rolling(50).mean().iloc[-1]
+            rows.append({"Group": group, "Ticker": tk,
+                         "RS vs SPY": round(rs, 1),
+                         "Trend": "🟢 up" if up else "🔴 down"})
+        except Exception:
+            rows.append({"Group": group, "Ticker": tk,
+                         "RS vs SPY": None, "Trend": "no data"})
+st.dataframe(pd.DataFrame(rows), hide_index=True)
