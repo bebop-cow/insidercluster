@@ -38,6 +38,15 @@ def rel_strength(ticker, months=3):
 	spy_ret = (closes["SPY"].iloc[-1]/closes["SPY"].iloc[0]-1) * 100            
 	return tk_ret - spy_ret
 
+def scorecard():
+	sectors = {"Oil": "XLE", "Solar": "TAN", "Nuclear": "URA"}
+	for name, tk in sectors.items():
+		rs = rel_strength(tk)
+		closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+		ma50 = closes.rolling(50).mean().iloc[-1]
+		trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
+		print(f"{name:8} ({tk}): RS vs SPY {rs:+.1f}% · {trend}")
+
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
 	prod = get_eia_series("WCRFPUS2", "sum/sndw")
@@ -51,7 +60,7 @@ def main():
 	# print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
 	# print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
 	# print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
-	print(rel_strength("XLE"))
+	score = scorecard()
 
 
 if __name__ == '__main__':
