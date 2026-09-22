@@ -264,10 +264,7 @@ c1.metric("Spot", f"${spot:.2f}")
 c2.metric("99% worst 5d (fat-tail)", f"-${t_move:.2f}")
 c3.metric("nu (tail fatness)", f"{nu:.1f}", "fat tails" if nu < 6 else "moderate")
 
-# -- RSI --
-r = rsi(s["closes"])
-label = "OVERBOUGHT" if r >= 70 else ("OVERSOLD" if r <= 30 else "neutral")
-st.write(f"• RSI(14): {r:.1f} - {label}")
+
 
 # ── Structure ──
 st.header("Structure")
@@ -291,7 +288,10 @@ if candles:
 else:
     st.write("• No candlestick pattern on latest bar")
 
-
+# -- RSI --
+r = rsi(s["closes"])
+label = "OVERBOUGHT" if r >= 70 else ("OVERSOLD" if r <= 30 else "neutral")
+st.write(f"• RSI(14): {r:.1f} - {label}")
 
 # ── Stance (synthesized) ──
 st.header("Stance")
