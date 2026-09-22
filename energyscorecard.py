@@ -44,12 +44,32 @@ def scorecard():
 		rs = rel_strength(tk)
 		closes = yf.Ticker(tk).history(period="5y")["Close"].dropna()
 		ma50 = closes.rolling(50).mean().iloc[-1]
-		yoy = closes.rolling(365).mean().iloc[-1]
+		yoy = closes.rolling(252).mean().iloc[-1]
 		y5 = closes.rolling(1250).mean().iloc[-1]
 		ma50trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
 		yoytrend = "above yoy (uptrend)" if closes.iloc[-1] > yoy else "below yoy (downtrend)"
 		y5trend = "above y5 (uptrend)" if closes.iloc[-1] > y5 else "below y5 (downtrend)"
 		print(f"{name:8} ({tk}): RS vs SPY {rs:+.1f}% · {ma50trend} · {yoytrend} · {y5trend}")
+
+	def nuclear_scan():
+		nuclear = {
+			"Miner": ["CCJ"],
+			"Enrich": ["LEU"],
+			"SMR": ["OKLO", "NNE", "SMR"],
+			"AI-Utility":["CEG", "VST", "TLN"],
+			"Uranium": ["URA", "SRUUF"],
+			}
+		for group, tickers in nuclear.items():
+			for tk in tickers:
+				try:
+					rs = rel_strength(tk)
+					closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+					ma50 = closes.rolling(50).mean().iloc[-1]
+					trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
+					print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
+				except Exception as e:
+					print(f"{group:11}{tk:6} - no data")
+				
 
 def main():
 	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
