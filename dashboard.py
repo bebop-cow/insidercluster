@@ -108,7 +108,7 @@ def get_tail(ticker):
 def rsi(closes, window=14):
     delta = closes.diff()
     gains = delta.clip(lower=0)
-    losses = -delta.clip(uppers=0)
+    losses = -delta.clip(upper=0)
     avg_gain = gains.rolling(window).mean()
     avg_losses = losses.rolling(window).mean()
     rs = avg_gain / avg_losses
