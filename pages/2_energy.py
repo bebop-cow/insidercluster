@@ -5,7 +5,7 @@ import pandas as pd
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from energyscorecard import rel_strength, scorecard, get_eia_series
+from energyscorecard import rel_strength, scorecard, get_eia_series, gulf_output
 
 st.title("⚡ Energy Sector — Lazuli")
 
@@ -53,6 +53,18 @@ c5.metric("Refinery Utilization", f"{f['util']:.1f}%",
           "near max (tight)" if f['util'] > 92 else "slack")
 c6.metric("Refining Capacity", f"{f['cap_chg']:+,.0f}k/d",
           "SHRINKING (bullish margins)" if f['cap_chg'] < 0 else "expanding")
+
+@st.cache_data(ttl=3600)
+def get_gulf():
+    return gulf_output()
+
+st.header("Gulf Output — Hormuz Supply at Risk")
+st.caption("⚠️ Reflects 2026 Iran-war disruption (Gulf output collapsed from Mar 2026)")
+total, breakdown = get_gulf()
+st.metric("Total Gulf Crude", f"{total:,.0f} TBPD")
+
+df = pd.DataFrame(breakdown, columns=["Country", "Output (TBPD)", "3mo Change"])
+st.dataframe(df, hide_index=True)
 
 
 st.header("Nuclear Basket")
