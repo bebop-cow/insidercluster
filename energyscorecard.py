@@ -5,124 +5,153 @@ import yfinance as yf
 import pandas as pd
 
 load_dotenv()
-
 KEY = os.getenv("EIA_KEY")
 
-def get_eia_series(series_id,route, n=8):
-	url = f"https://api.eia.gov/v2/petroleum/{route}/data/"
-	params = {
-        "api_key": KEY,
-        "frequency": "weekly",
-        "data[0]": "value",
+# ══════════════════════════════════════════════════════════════════
+# DATA FETCHERS
+# ══════════════════════════════════════════════════════════════════
+
+def get_eia_series(series_id, route, n=8):
+    """Weekly US petroleum series (inventories, production, SPR, refinery)."""
+    url = f"https://api.eia.gov/v2/petroleum/{route}/data/"
+    params = {
+        "api_key": KEY, "frequency": "weekly", "data[0]": "value",
         "facets[series][]": series_id,
-        "sort[0][column]": "period",
-        "sort[0][direction]": "desc",
+        "sort[0][column]": "period", "sort[0][direction]": "desc",
         "length": n,
     }
-	r = requests.get(url, params=params, timeout=20)
-	rows = r.json()["response"]["data"]
-	return [(row["period"], float(row["value"])) for row in rows]
+    rows = requests.get(url, params=params, timeout=20).json()["response"]["data"]
+    return [(row["period"], float(row["value"])) for row in rows]
 
-def flatten_columns(df):
-	if isinstance(df.columns, pd.MultiIndex):
-		df.columns = df.columns.get_level_values(0)
-	return df
 
-def rel_strength(ticker, months=3):
-	end = pd.Timestamp.now()
-	start = end - pd.DateOffset(months=months)
-	df = yf.download([ticker,"SPY"], start=start.strftime("%Y-%m-%d"),
-		end=end.strftime("%Y-%m-%d"), progress=False)
-	closes = df["Close"].dropna() 
-	tk_ret = (closes[ticker].iloc[-1]/closes[ticker].iloc[0]-1) * 100            
-	spy_ret = (closes["SPY"].iloc[-1]/closes["SPY"].iloc[0]-1) * 100            
-	return tk_ret - spy_ret
-
-def scorecard():
-	sectors = {"Oil": "XLE", "Solar": "TAN", "Nuclear": "URA"}
-	for name, tk in sectors.items():
-		rs = rel_strength(tk)
-		closes = yf.Ticker(tk).history(period="5y")["Close"].dropna()
-		ma50 = closes.rolling(50).mean().iloc[-1]
-		yoy = closes.rolling(252).mean().iloc[-1]
-		y5 = closes.rolling(1250).mean().iloc[-1]
-		ma50trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
-		yoytrend = "above yoy (uptrend)" if closes.iloc[-1] > yoy else "below yoy (downtrend)"
-		y5trend = "above y5 (uptrend)" if closes.iloc[-1] > y5 else "below y5 (downtrend)"
-		print(f"{name:8} ({tk}): RS vs SPY {rs:+.1f}% · {ma50trend} · {yoytrend} · {y5trend}")
-
-def probe_intl():
+def intl_production(country, n=6):
+    """Monthly crude production by country (EIA International). Lags ~4-6mo."""
     url = "https://api.eia.gov/v2/international/data/"
     params = {
-        "api_key": KEY,
-        "frequency": "monthly",
-        "data[0]": "value",
-        "facets[productId][]": "57",      # crude oil (may need adjusting)
-        "facets[activityId][]": "1",      # production
-        "facets[countryRegionId][]": "SAU",   # Saudi Arabia
-        "sort[0][column]": "period",
-        "sort[0][direction]": "desc",
-        "length": 5,
+        "api_key": KEY, "frequency": "monthly", "data[0]": "value",
+        "facets[productId][]": "57",       # crude incl. lease condensate
+        "facets[activityId][]": "1",       # production
+        "facets[countryRegionId][]": country,
+        "sort[0][column]": "period", "sort[0][direction]": "desc",
+        "length": n,
     }
-    r = requests.get(url, params=params, timeout=20)
-    print(r.json())
+    rows = requests.get(url, params=params, timeout=20).json()["response"]["data"]
+    return [(row["period"], float(row["value"])) for row in rows]
+
+
+def flatten_columns(df):
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    return df
+
+
+def rel_strength(ticker, months=3):
+    """Ticker's return minus SPY's over the window. Positive = outperforming."""
+    end = pd.Timestamp.now()
+    start = end - pd.DateOffset(months=months)
+    df = yf.download([ticker, "SPY"], start=start.strftime("%Y-%m-%d"),
+                     end=end.strftime("%Y-%m-%d"), progress=False)
+    closes = df["Close"].dropna()
+    tk_ret = (closes[ticker].iloc[-1] / closes[ticker].iloc[0] - 1) * 100
+    spy_ret = (closes["SPY"].iloc[-1] / closes["SPY"].iloc[0] - 1) * 100
+    return tk_ret - spy_ret
+
+
+# ══════════════════════════════════════════════════════════════════
+# SECTOR SCANS  (return rows; the Streamlit page displays them)
+# ══════════════════════════════════════════════════════════════════
+
+def _scan(basket):
+    """Shared: score a {group: [tickers]} basket on RS + 50d trend."""
+    rows = []
+    for group, tickers in basket.items():
+        for tk in tickers:
+            try:
+                rs = rel_strength(tk)
+                closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
+                up = closes.iloc[-1] > closes.rolling(50).mean().iloc[-1]
+                rows.append((group, tk, round(rs, 1), "up" if up else "down"))
+            except Exception:
+                rows.append((group, tk, None, "no data"))
+    return rows
+
 
 def nuclear_scan():
-	nuclear = {
-		"Miner": ["CCJ"],
-		"Enrich": ["LEU"],
-		"SMR": ["OKLO", "NNE", "SMR"],
-		"AI-Utility":["CEG", "VST", "TLN"],
-		"Uranium": ["URA", "SRUUF"],
-		}
-	for group, tickers in nuclear.items():
-		for tk in tickers:
-			try:
-				rs = rel_strength(tk)
-				closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
-				ma50 = closes.rolling(50).mean().iloc[-1]
-				trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
-				print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
-			except Exception as e:
-				print(f"{group:11}{tk:6} - no data")
+    return _scan({
+        "Miner": ["CCJ"], "Enrich": ["LEU"],
+        "SMR": ["OKLO", "NNE", "SMR"],
+        "AI-Utility": ["CEG", "VST", "TLN"],
+        "Uranium": ["URA", "SRUUF"],
+    })
+
 
 def solar_breakdown():
-	solar = {
-		"Solar-ETF": ["TAN"],
-		"Residential": ["RUN", "ENPH", "SEDG"],
-		"Utility-scale": ["FSLR"],
-		"Comparators": ["ICLN", "ARKK", "TLT"],
-	}
-	for group, tickers in solar.items():
-		for tk in tickers:
-			try:
-				rs = rel_strength(tk)
-				closes = yf.Ticker(tk).history(period="6mo")["Close"].dropna()
-				ma50 = closes.rolling(50).mean().iloc[-1]
-				trend = "above 50d (uptrend)" if closes.iloc[-1] > ma50 else "below 50d (downtrend)"
-				print(f"{group:11}{tk:6} RS {rs:+.1f}% {trend}")
-			except Exception as e:
-				print(f"{group:11}{tk:6} - no data")
-			
+    return _scan({
+        "Solar-ETF": ["TAN"],
+        "Residential": ["RUN", "ENPH", "SEDG"],
+        "Utility-scale": ["FSLR"],
+        "Comparators": ["ICLN", "ARKK", "TLT"],
+    })
+
+
+def scorecard():
+    """Oil/Solar/Nuclear top-level: RS + multi-timeframe trend."""
+    sectors = {"Oil": "XLE", "Solar": "TAN", "Nuclear": "URA"}
+    out = []
+    for name, tk in sectors.items():
+        rs = rel_strength(tk)
+        closes = yf.Ticker(tk).history(period="5y")["Close"].dropna()
+        last = closes.iloc[-1]
+        out.append({
+            "sector": name, "ticker": tk, "rs": round(rs, 1),
+            "ma50": last > closes.rolling(50).mean().iloc[-1],
+            "yoy": last > closes.rolling(252).mean().iloc[-1],
+            "y5": last > closes.rolling(1250).mean().iloc[-1],
+        })
+    return out
+
+
+# ══════════════════════════════════════════════════════════════════
+# GULF / MIDDLE EAST OUTPUT
+# ══════════════════════════════════════════════════════════════════
+
+def gulf_output():
+    """Sum of Gulf crude production + per-country 3mo change.
+    NOTE: reflects real 2026 Iran-war supply disruption from Mar 2026 on
+    (verified: ~10M bpd Gulf output lost by mid-March per IEA/EIA)."""
+    gulf = {"Saudi": "SAU", "UAE": "ARE", "Kuwait": "KWT",
+            "Iraq": "IRQ", "Iran": "IRN", "Qatar": "QAT"}
+    total = 0.0
+    breakdown = []
+    for name, code in gulf.items():
+        data = intl_production(code)
+        latest = data[0][1]
+        prev = data[3][1]          # ~3 months earlier
+        total += latest
+        breakdown.append((name, latest, latest - prev))
+    return total, breakdown
+
+
+
 
 def main():
-	stocks =  get_eia_series("WCESTUS1", "stoc/wstk")
-	prod = get_eia_series("WCRFPUS2", "sum/sndw")
-	spr =  get_eia_series("WCSSTUS1", "sum/sndw")
-	gasd = get_eia_series("WGFUPUS2", "sum/sndw")
-	util = get_eia_series("WPULEUS3", "pnp/wiup")      # % utilization
-	cap  = get_eia_series("WOCLEUS2", "pnp/wiup")      # operable capacity, kbbl/d
-	stock_chg = stocks[0][1] - stocks[4][1]      # draw/build
-	prod_chg = prod[0][1] - prod[4][1]           # supply direction
-	spr_chg = spr[0][1] - spr[4][1]           # spr direction
-	gasd_chg = gasd[0][1] - gasd[4][1]           # gasoline demand direction
-	# print(f"Inventories: {stock_chg:+,.0f}k — {'DRAW (bullish)' if stock_chg<0 else 'BUILD (bearish)'}")
-	# print(f"Production:  {prod_chg:+,.0f}k/d — {'RISING (bearish)' if prod_chg>0 else 'FALLING (bullish)'}")
-	# print(f"SPR:  {spr_chg:+,.0f}k/d — {'RELEASING (bearish)' if spr_chg<0 else 'REFILLING (bullish)'}")
-	# print(f"GASOLINE demand:  {gasd_chg:+,.0f}k/d — {'RISING (bullish)' if gasd_chg>0 else 'FALLING (bearish)'}")
-	# score = scorecard()
-	
+    print("=== OIL FUNDAMENTALS (weekly, 4wk change) ===")
+    for label, sid, route, unit in [
+        ("Inventories", "WCESTUS1", "stoc/wstk", "k"),
+        ("Production", "WCRFPUS2", "sum/sndw", "k/d"),
+        ("SPR", "WCSSTUS1", "sum/sndw", "k"),
+        ("Gasoline demand", "WGFUPUS2", "sum/sndw", "k/d"),
+    ]:
+        d = get_eia_series(sid, route)
+        chg = d[0][1] - d[4][1]
+        print(f"  {label:16} {chg:+,.0f}{unit}")
+
+    print("\n=== GULF OUTPUT (monthly, war-disrupted) ===")
+    total, breakdown = gulf_output()
+    print(f"  Total: {total:,.0f} TBPD")
+    for name, latest, chg in breakdown:
+        print(f"    {name:8} {latest:,.0f} ({chg:+,.0f} 3mo)")
 
 
-if __name__ == '__main__':
-    	main()    
+if __name__ == "__main__":
+    main()
