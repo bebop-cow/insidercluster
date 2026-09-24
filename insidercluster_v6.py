@@ -236,8 +236,9 @@ def main():
     else:
         print(f"{'#':<3}{'SCORE':<7}{'TAG':<11}{'TICKER':<8}{'INS':<4}{'TOTAL $':<14}COMPANY")
         for i, r in enumerate(buy_rows[:TOP_N], 1):
+            dates = f"{r['first_date']}→{r['last_date']}"
             print(f"{i:<3}{r['score']:<7.1f}{r['tag']:<11}{r['ticker']:<8}"
-                  f"{r['insiders']:<4}${r['total']:<13,.0f}{r['company'][:24]}")
+                  f"{r['insiders']:<4}${r['total']:<13,.0f}{dates:<24}{r['company'][:24]}")
 
     # ---- SELL WATCHLIST ----
     print(f"\n{'='*64}")
@@ -249,8 +250,9 @@ def main():
     else:
         print(f"{'TICKER':<8}{'SELLERS':<9}{'TOTAL SOLD':<16}COMPANY")
         for r in sell_rows[:TOP_N]:
+            dates = f"{r['first_date']}→{r['last_date']}"
             print(f"{r['ticker']:<8}{r['sellers']:<9}${r['total_sell']:<15,.0f}"
-                  f"{r['company'][:24]}")
+                  f"{dates:<24}{r['company'][:24]}")
         print("\n  NB: sells ≠ bearish conviction. Tax, diversification, and")
         print("  scheduled 10b5-1 plans all show here. Use as context, not a trigger.")
 
