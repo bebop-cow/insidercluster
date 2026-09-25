@@ -273,7 +273,7 @@ def main():
     feat["regime"] = classify_rules(feat)
 
     print("=" * 60)
-    print("MARKET REGIME FILTER — demo on mock data")
+    print("MARKET REGIME FILTER ")
     print("=" * 60)
 
     # regime distribution
