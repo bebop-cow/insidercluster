@@ -183,7 +183,7 @@ def build_features(df):
 
 # thresholds — PRIORS, tune to your data
 VIX_Z_HIGH = 0.5          # vix z above this = high-vol state
-ATR_EXPAND = 1.10         # fast/slow ATR above this = expanding
+ATR_EXPAND = 1.30         # fast/slow ATR above this = expanding
 TREND_HURST = 0.55        # hurst above this = persistent/trending
 TREND_ADX = 22            # adx above this = trending
 DIST_TREND = 1.0          # |z dist from 200sma| above this = extended/trending
@@ -192,7 +192,7 @@ DIST_TREND = 1.0          # |z dist from 200sma| above this = extended/trending
 def classify_rules(feat):
     """Rules-based regime per row. Returns a Series of 1-4 (or NaN if features missing)."""
     f = feat
-    high_vol = (f["vix_z"] > VIX_Z_HIGH) | (f["atr_ratio"] > ATR_EXPAND)
+     high_vol = (f["vix_z"] > VIX_Z_HIGH) | ((f["atr_ratio"] > ATR_EXPAND) & (f["vix_z"] > 0))
     trending = (f["hurst"] > TREND_HURST) | (f["adx"] > TREND_ADX) | (f["dist200"].abs() > DIST_TREND)
 
     regime = pd.Series(np.nan, index=f.index)
