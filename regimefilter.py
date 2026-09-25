@@ -37,13 +37,18 @@ import yfinance as yf
 # PART 0 — MOCK DATA (replace with real SPX OHLCV + VIX)
 # ══════════════════════════════════════════════════════════════════
 
+def flatten_columns(df):
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    return df
+
 def real_data(years=5):
-    import yfinance as yf
     spx = yf.download("^GSPC", period=f"{years}y", progress=False)
-    vix = yf.download("^VIX", period=f"{years}y", progress=False)
-    # flatten + lowercase spx cols, pull vix close, align, dropna
-    ...
-    return df   # columns: open, high, low, close, volume, vix
+    vix = yf.download("^VIX", period=f"{years}y", progress=False)["Close"]
+    spx = flatten_columns(spx)
+    spx = spx.rename(columns=str.lower)
+    spx["vix"] = vix
+    return spx[["open", "high", "low", "close", "volume", "vix"]].dropna()  # columns: open, high, low, close, volume, vix
 
     # regime-switching vol: alternate low/high vol blocks
     block = 60
