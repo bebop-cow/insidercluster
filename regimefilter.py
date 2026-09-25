@@ -30,18 +30,20 @@ SPX OHLCV + VIX to use for real.
 import numpy as np
 import pandas as pd
 from scipy import stats
+import yfinance as yf
 
 
 # ══════════════════════════════════════════════════════════════════
 # PART 0 — MOCK DATA (replace with real SPX OHLCV + VIX)
 # ══════════════════════════════════════════════════════════════════
 
-def mock_data(n=800, seed=7):
-    """Synthetic OHLCV + VIX with alternating calm/turbulent stretches,
-    so all 4 regimes actually appear. Not realistic returns — just enough
-    structure to exercise the classifier."""
-    rng = np.random.default_rng(seed)
-    dates = pd.bdate_range("2023-01-01", periods=n)
+def real_data(years=5):
+    import yfinance as yf
+    spx = yf.download("^GSPC", period=f"{years}y", progress=False)
+    vix = yf.download("^VIX", period=f"{years}y", progress=False)
+    # flatten + lowercase spx cols, pull vix close, align, dropna
+    ...
+    return df   # columns: open, high, low, close, volume, vix
 
     # regime-switching vol: alternate low/high vol blocks
     block = 60
@@ -261,7 +263,7 @@ def strategy_for(regime):
 # ══════════════════════════════════════════════════════════════════
 
 def main():
-    df = mock_data()
+    df = real_data()
     feat = build_features(df)
     feat["regime"] = classify_rules(feat)
 
