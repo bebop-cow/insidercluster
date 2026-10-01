@@ -7,4 +7,12 @@ def project_fcf(fcf0, growth, years=5):
 		projectfcf.append(year_n)
 	return projectfcf
 
-print(project_fcf(100, 0.10, 5))
+def discount_to_pv(cashflows, discount_rate):
+	pvs = []
+    for i, cf in enumerate(cashflows):
+        year = i + 1                              # index 0 = year 1
+        pv = cf / (1 + discount_rate)**year
+        pvs.append(pv)
+    return pvs
+
+print(discount_to_pv([110, 121, 133.1, 146.41, 161.05], 0.10))
