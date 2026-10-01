@@ -2,7 +2,7 @@ import pandas as pd
 import yfinance as yf
 from openpyxl.workbook import Workbook
 
-tickers =["V", "CVX", "TER", "CRWV", "AMD", "GOOGL", "NVO", "AAPL", "GLW"]
+tickers =["DIS", "NFLX", "AMZN", "PSKY", "WBD"]
 def flatten_columns(df):
 	if isinstance(df.columns, pd.MultiIndex):
 		df.columns = df.columns.get_level_values(0)
@@ -29,7 +29,7 @@ def results(tickers, n=7):
 	return pd.DataFrame(data)
 
 def main():
-	df = results(tickers,500)
+	df = results(tickers,2000)
 	print(df)
 	print(df.shape)
 	df.to_excel("closes.xlsx")
