@@ -29,4 +29,15 @@ def intrinsic_value(fcf0, growth, discount_rate, terminal_growth, shares, years=
 	total = sum(pvs) + tv_pv
 	return total / shares
 
-print(intrinsic_value(100, 0.10, 0.10, 0.025, 50))
+def reverse_dcf(price, fcf0, discount_rate, terminal_growth, shares, years=5):
+	lo, hi = -0.10,0.50
+	if _ == range(50):
+		mid = (lo + hi) / 2
+		iv = intrinsic_value(fcf0, mid, discount_rate, terminal_growth, shares, years)
+		if iv > price:
+			hi = mid
+		else:
+			lo = mid
+	return mid
+
+print(reverse_dcf(37.33, 100, 0.10, 0.025, 50))
