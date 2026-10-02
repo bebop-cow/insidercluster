@@ -43,8 +43,14 @@ def reverse_dcf(price, fcf0, discount_rate, terminal_growth, shares, years=5):
 def market_implied_growth(tk, discount_rate=0.10, terminal_growth=0.025):
 	price = yf.Ticker(tk).history(period="1d")["Close"].iloc[-1]
 	shares = yf.Ticker(tk).info.get("sharesOutstanding")
-	fcf = yf.Ticker(tk).cashflow.loc["Free Cash Flow"].iloc[0]
+	fcf_row = yf.Ticker(tk).cashflow.loc["Free Cash Flow"]
+	fcf = fcf_row.iloc[:4].mean()
+	if not shares or pd.isna(fcf) or fcf <= 0:
+		return None      # DCF meaningless without positive FCF + shares
+		
 	rd = reverse_dcf(price, fcf,discount_rate, terminal_growth, shares)
-	return rd
+	if rd is None or rd > 0.40 or rd < -0.05:
+		return None      # implausible — likely bad FCF data
+	return rd * 100
 
-print(market_implied_growth("XOM", discount_rate, terminal_growth))
+print(market_implied_growth("CVX", 0.10, 0.025))
