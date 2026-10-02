@@ -1,4 +1,4 @@
-
+import yfinance as yf
 
 def project_fcf(fcf0, growth, years=5):
 	projectfcf = []
@@ -31,7 +31,7 @@ def intrinsic_value(fcf0, growth, discount_rate, terminal_growth, shares, years=
 
 def reverse_dcf(price, fcf0, discount_rate, terminal_growth, shares, years=5):
 	lo, hi = -0.10,0.50
-	if _ == range(50):
+	for _ in range(50):
 		mid = (lo + hi) / 2
 		iv = intrinsic_value(fcf0, mid, discount_rate, terminal_growth, shares, years)
 		if iv > price:
@@ -40,4 +40,11 @@ def reverse_dcf(price, fcf0, discount_rate, terminal_growth, shares, years=5):
 			lo = mid
 	return mid
 
-print(reverse_dcf(37.33, 100, 0.10, 0.025, 50))
+def market_implied_growth(tk, discount_rate=0.10, terminal_growth=0.025):
+	price = yf.Ticker(tk).history(period="1d")["Close"].iloc[-1]
+	shares = yf.Ticker(tk).info.get("sharesOutstanding")
+	fcf = yf.Ticker(tk).cashflow.loc["Free Cash Flow"].iloc[0]
+	rd = reverse_dcf(price, fcf,discount_rate, terminal_growth, shares)
+	return rd
+
+print(market_implied_growth("XOM", discount_rate, terminal_growth))
