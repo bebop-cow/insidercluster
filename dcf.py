@@ -1,4 +1,5 @@
 import yfinance as yf
+import pandas as pd
 
 def project_fcf(fcf0, growth, years=5):
 	projectfcf = []
@@ -47,10 +48,10 @@ def market_implied_growth(tk, discount_rate=0.10, terminal_growth=0.025):
 	fcf = fcf_row.iloc[:4].mean()
 	if not shares or pd.isna(fcf) or fcf <= 0:
 		return None      # DCF meaningless without positive FCF + shares
-		
+
 	rd = reverse_dcf(price, fcf,discount_rate, terminal_growth, shares)
 	if rd is None or rd > 0.40 or rd < -0.05:
 		return None      # implausible — likely bad FCF data
 	return rd * 100
 
-print(market_implied_growth("CVX", 0.10, 0.025))
+print(market_implied_growth("XOM", 0.10, 0.025))
