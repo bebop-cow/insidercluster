@@ -16,9 +16,12 @@ def build(month=1):
 	return pct_change.dropna()
 
 def main():
-    changes = build(1).tail(20).round(2)
+    changes = build(1).tail(3).round(2)
+    totals = ((1 + changes/100).prod() - 1) * 100    # all numeric here, no Day col yet
     changes.insert(0, "Day", changes.index.day_name())
     print(changes)
+    print("\n20-day totals (ranked):")
+    print(totals.sort_values(ascending=False).round(2))
 
 if __name__ == '__main__':
 	main()
