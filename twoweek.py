@@ -9,7 +9,7 @@ def flatten_columns(df):
 def build(month=1):
 	end = pd.Timestamp.now()
 	start = end - pd.DateOffset(months=month)
-	df = yf.download(["XLK","XLF","XLV","XLY","XLP","XLE","XLI","XLB","XLU","XLRE","XLC"], start=start.strftime("%Y-%m-%d"),
+	df = yf.download(["SOXX","XLK","XLF","XLV","XLY","XLP","XLE","XLI","XLB","XLU","XLRE","XLC"], start=start.strftime("%Y-%m-%d"),
 		end=end.strftime("%Y-%m-%d"), progress=False)
 	closes = df["Close"]
 	pct_change = closes.pct_change() * 100             

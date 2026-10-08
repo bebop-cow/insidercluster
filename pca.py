@@ -2,7 +2,7 @@ import pandas as pd
 import yfinance as yf
 from openpyxl.workbook import Workbook
 
-tickers =["DIS", "NFLX", "AMZN", "PSKY", "WBD"]
+tickers =["TAN","PBW", "FAN", "NLR"]
 def flatten_columns(df):
 	if isinstance(df.columns, pd.MultiIndex):
 		df.columns = df.columns.get_level_values(0)
@@ -19,7 +19,7 @@ def days(ticker, n):
 	closes = df["Close"].tail(n)
 	return closes
 
-def results(tickers, n=7):
+def results(tickers, n=6):
 	data ={}
 	for tk in tickers:
 		r = days(tk, n)
@@ -29,11 +29,11 @@ def results(tickers, n=7):
 	return pd.DataFrame(data)
 
 def main():
-	df = results(tickers,2000)
+	df = results(tickers,1500)
 	print(df)
 	print(df.shape)
-	df.to_excel("closes.xlsx")
-	print("wrote closes.xlsx")
+	df.to_excel("nonoil.xlsx")
+	print("wrote nonoil.xlsx")
 	
 
 if __name__ == '__main__':
