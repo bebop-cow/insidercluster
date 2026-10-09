@@ -13,6 +13,8 @@ THRESHOLDS = {
 RANK = {"RED": 0, "AMBER": 1, "GREEN": 2}
 DECEL_METRICS = {"RPO_growth", "cloud_growth"}
 
+AI_CHAIN = ["NVDA","MSFT","GOOGL","AMZN","META","ORCL","AVGO","MU","GEV","ANET","VRT"]
+
 def flag_decel(value, prev, red_drop=4.0, amber_drop=1.0):
     drop = prev - value
     if drop >= red_drop:
@@ -63,6 +65,9 @@ def evaluate(values, manual):
             t = THRESHOLDS[metric]
             flag = flag_level(val, t["red"], t["amber"], t["higher_worse"])
         rows.append((metric, round(val, 2), flag))
+    ccc, hy = values["CCC_OAS"], values["HY_OAS"]
+    gap = round(ccc - hy, 2)
+    rows.append(("CCC-HY_gap", gap, flag_divergence(ccc, hy)))
     rows.sort(key=lambda r: RANK[r[2]])
     return rows
 
@@ -71,5 +76,34 @@ def all_values():
     for metric, data in load_manual().items():
         v[metric] = data["value"]
     return v
-	
-print(evaluate(all_values(), load_manual()))
+
+def flag_divergence(ccc, hy, red=11.0, amber=10.0):
+    gap = ccc - hy
+    return flag_level(gap, red, amber, higher_is_worse=True)
+
+MARK = {"RED": "🔴", "AMBER": "🟡", "GREEN": "🟢"}
+
+def show(rows):
+    print(f"\n{'METRIC':14}{'VALUE':>8}  FLAG")
+    print("-" * 34)
+    for metric, value, flag in rows:
+        print(f"{metric:14}{value:>8}  {MARK[flag]} {flag}")
+
+from insidercluster_v6 import fetch_recent_form4, analyze
+
+def flag_clusters():
+    _, sell_rows = analyze(fetch_recent_form4())
+    hits = [r for r in sell_rows if r["ticker"] in AI_CHAIN]
+    n = len(hits)
+    flag = "RED" if n >= 3 else "AMBER" if n >= 1 else "GREEN"
+    return n, flag
+
+def main():
+    rows = evaluate(all_values(), load_manual())
+    n, flag = flag_clusters()
+    rows.append(("insider_clusters", n, flag))
+    rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
+    show(rows)
+
+if __name__ == '__main__':
+ 	main()
