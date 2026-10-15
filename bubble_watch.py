@@ -144,6 +144,27 @@ def latest_pairs():
         })
     return out
 
+def flag_spread(bond_yield, y30):
+    spread = bond_yield - y30
+    return flag_level(spread, red=5.0, amber=2.0, higher_is_worse=True)
+
+def flag_wow(bond_yield, prev):
+    if prev is None:
+        return "GREEN"                    # no history yet
+    rise = bond_yield - prev
+    return "RED" if rise >= 0.5 else "GREEN"    # 0.5 points = 50bp
+
+def credit_rows(y30):
+    rows = []
+    for bond in latest_pairs():
+        spread_flag = flag_spread(bond["yield"], y30)
+        wow_flag    = flag_wow(bond["yield"], bond["prev"])
+        # take the worse of the two
+        flag = spread_flag if RANK[spread_flag] <= RANK[wow_flag] else wow_flag
+        label = f"{bond['ticker']}_{bond['bond_type']}"
+        rows.append((label, bond["yield"], flag))
+    return rows
+
 def main():
     rows = evaluate(all_values(), load_manual())
     n, flag, names = flag_clusters()
@@ -153,7 +174,8 @@ def main():
     now, flag = flag_custody()
     rows.append(("foreign_custody", round(now/1000, 0), flag))   # /1000 to show in billions
     rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
-    
+    y30 = get_auto()["30Y"]
+    rows.extend(credit_rows(y30))        # extend, not append — it's a list of rows
     show(rows)
     
 
