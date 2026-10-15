@@ -1,0 +1,9 @@
+#!/bin/bash
+cd ~/Documents/Programming/Quant/Claude
+deactivate 2>/dev/null
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install pandas numpy yfinance scipy arch requests matplotlib python-dotenv scikit-learn streamlit TA-Lib
+python3 -c "import pandas; print('ok')"

@@ -12,7 +12,8 @@ THRESHOLDS = {
 
 RANK = {"RED": 0, "AMBER": 1, "GREEN": 2}
 DECEL_METRICS = {"RPO_growth", "cloud_growth"}
-
+BINARY_METRICS = {"capex_revision"}
+RISING_METRICS = {"nvda_ar_concentration"}
 AI_CHAIN = ["NVDA","MSFT","GOOGL","AMZN","META","ORCL","AVGO","MU","GEV","ANET","VRT"]
 
 def flag_decel(value, prev, red_drop=4.0, amber_drop=1.0):
@@ -40,6 +41,18 @@ def flag_level(value, red, amber, higher_is_worse=True):
         else:
             return "GREEN"
 
+def flag_rising(value, prev, red_rise=10.0, amber_rise=3.0):
+    rise = value - prev
+    if rise >= red_rise:
+        return "RED"
+    elif rise >= amber_rise:
+        return "AMBER"
+    else:
+        return "GREEN"
+
+def flag_binary(value):
+    return "RED" if value >= 1 else "GREEN"
+
 def load_manual(path="bubble_manual.csv"):
     try:
         df = pd.read_csv(path).set_index("metric")
@@ -61,6 +74,11 @@ def evaluate(values, manual):
         if metric in DECEL_METRICS:
             prev = manual[metric]["prev"]
             flag = flag_decel(val, prev)
+        elif metric in BINARY_METRICS:
+        	flag = flag_binary(val)
+        elif metric in RISING_METRICS:
+        	prev = manual[metric]["prev"]
+        	flag = flag_rising(val, prev)
         else:
             t = THRESHOLDS[metric]
             flag = flag_level(val, t["red"], t["amber"], t["higher_worse"])
@@ -96,14 +114,48 @@ def flag_clusters():
     hits = [r for r in sell_rows if r["ticker"] in AI_CHAIN]
     n = len(hits)
     flag = "RED" if n >= 3 else "AMBER" if n >= 1 else "GREEN"
-    return n, flag
+    names = [r["ticker"] for r in hits]
+    return n, flag, names
+
+def flag_custody():
+    s = fetch_series("WMTSECL1").dropna()
+    now = s.iloc[-1]
+    prev = s.iloc[-5]                    # ~4 weeks ago
+    flag = flag_decel(now, prev, red_drop=40000, amber_drop=15000)   # in millions
+    return now, flag
+
+def credit_watch():
+    df = pd.read_csv("credit_watch.csv", parse_dates=["date"])
+    df = df.sort_values("date")
+    groups = df.groupby(["ticker", "bond_type"]).tail(2)
+    return groups
+
+def latest_pairs():
+    df = credit_watch()                        # the last-2-rows frame
+    out = []
+    for (ticker, btype), g in df.groupby(["ticker","bond_type"]):
+        g = g.sort_values("date")
+        latest = g.iloc[-1]
+        prev = g.iloc[-2]["yield"] if len(g) >= 2 else None
+        out.append({
+            "ticker": ticker, "bond_type": btype,
+            "yield": latest["yield"], "prev": prev,
+            "cusip": latest["cusip"],
+        })
+    return out
 
 def main():
     rows = evaluate(all_values(), load_manual())
-    n, flag = flag_clusters()
+    n, flag, names = flag_clusters()
     rows.append(("insider_clusters", n, flag))
+    if names:
+        print(f" insider cluster: {', '.join(names)}")
+    now, flag = flag_custody()
+    rows.append(("foreign_custody", round(now/1000, 0), flag))   # /1000 to show in billions
     rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
+    
     show(rows)
+    
 
 if __name__ == '__main__':
- 	main()
+    main()
