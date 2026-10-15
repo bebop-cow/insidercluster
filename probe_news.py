@@ -1,9 +1,3 @@
-import requests
-url = "https://news.google.com/rss/search?q=CoreWeave+debt&hl=en-US"
-r = requests.get(url, timeout=10)
-print(r.status_code, len(r.text))
-print(r.text[:500])
-
 import feedparser
 import urllib.parse
 
@@ -31,11 +25,37 @@ WATCHLIST = ["Oracle","CoreWeave","Meta","Microsoft","Google","Amazon",
              "Nebius","Applied Digital","IREN","Nvidia"]
 
 def scan():
-    hits = []
-    for name in WATCHLIST:
-        for title, link in fetch_headlines(f"{name} debt", limit=5):
-            if classify(title) == "YES":
-                hits.append((name, title, link))
-    return hits
+	hits = []
+	seen = set()
+	for name in WATCHLIST:
+		for title, link in fetch_headlines(f"{name} debt", limit=5):
+			if classify(title) == "YES" and title not in seen:
+				seen.add(title)
+				hits.append((name, title, link))
+	return hits
+
+def show_scan(hits):
+    if not hits:
+        print("No distress headlines flagged.")
+        return
+    current = None
+    for name, title, link in hits:
+        if name != current:            # new company — print header
+            print(f"\n🔴 {name}")
+            current = name
+        print(f"   • {title}")
+
+import subprocess
+def notify(count):
+    msg = f"{count} AI-debt distress headlines flagged — review bubble scan"
+    subprocess.run(["osascript", "-e", f'display notification "{msg}" with title "Bubble Watch"'])
+
+def main():
+	hits = scan()
+	show_scan(hits)
+	
+
+if __name__ == '__main__':
+	main()
 
 
