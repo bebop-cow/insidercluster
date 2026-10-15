@@ -165,6 +165,12 @@ def credit_rows(y30):
         rows.append((label, bond["yield"], flag))
     return rows
 
+def flag_syndication():
+    cutoff = pd.Timestamp.now() - pd.DateOffset(days=90)
+    recent = df[df["date_reported"] >= cutoff]
+    stalled = recent[(recent["days_stuck"] >60) | (recent["status"].isin(["stalled", "discount", "pulled"]))]
+    n = led(stalled)
+
 def main():
     rows = evaluate(all_values(), load_manual())
     n, flag, names = flag_clusters()
