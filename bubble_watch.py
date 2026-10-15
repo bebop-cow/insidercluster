@@ -166,10 +166,13 @@ def credit_rows(y30):
     return rows
 
 def flag_syndication():
+    df = pd.read_csv("syndication_watch.csv", parse_dates=["date_reported"])
     cutoff = pd.Timestamp.now() - pd.DateOffset(days=90)
     recent = df[df["date_reported"] >= cutoff]
     stalled = recent[(recent["days_stuck"] >60) | (recent["status"].isin(["stalled", "discount", "pulled"]))]
-    n = led(stalled)
+    n = len(stalled)
+    flag = "RED" if n >= 2 else "AMBER" if n >= 1 else "GREEN"
+    return n, flag
 
 def main():
     rows = evaluate(all_values(), load_manual())
@@ -182,7 +185,10 @@ def main():
     rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
     y30 = get_auto()["30Y"]
     rows.extend(credit_rows(y30))        # extend, not append — it's a list of rows
+    n, flag = flag_syndication()
+    rows.append(("syndication", n, flag))
     show(rows)
+    
     
 
 if __name__ == '__main__':
