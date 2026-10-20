@@ -1,5 +1,12 @@
 import feedparser
 import urllib.parse
+import requests
+import os
+from dotenv import load_dotenv
+here = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(here, ".env"))
+NTFY_KEY = os.getenv("NTFY_KEY")
+
 
 def fetch_headlines(query, limit=10):
     q = urllib.parse.quote(query)                    # "CoreWeave debt" -> "CoreWeave%20debt"
@@ -45,15 +52,32 @@ def show_scan(hits):
             current = name
         print(f"   • {title}")
 
+from twos10s30s import fetch_series
+
+def yield_line():
+    y10 = fetch_series("DGS10").dropna()
+    y30 = fetch_series("DGS30").dropna()
+    chg10 = (y10.iloc[-1] - y10.iloc[-2]) * 100      # bp move day-over-day
+    chg30 = (y30.iloc[-1] - y30.iloc[-2]) * 100
+    return f"10Y {y10.iloc[-1]:.2f}% ({chg10:+.0f}bp) | 30Y {y30.iloc[-1]:.2f}% ({chg30:+.0f}bp)"
+
+
 import subprocess
-def notify(count):
-    msg = f"{count} AI-debt distress headlines flagged — review bubble scan"
-    subprocess.run(["osascript", "-e", f'display notification "{msg}" with title "Bubble Watch"'])
+def notify(hits):
+    names = ", ".join(sorted(set(name for name, _, _ in hits)))
+    body = yield_line() + "\n\n" + "\n".join(f"• {title}" for name, title, link in hits)
+    requests.post(
+        f"https://ntfy.sh/{NTFY_KEY}",
+        data=body.encode("utf-8"),
+        headers={"Title": f"Distress: {names}"},
+    )
 
 def main():
 	hits = scan()
 	show_scan(hits)
-	
+	if hits:
+		notify(hits)
+	print(yield_line())
 
 if __name__ == '__main__':
 	main()
