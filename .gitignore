@@ -13,3 +13,6 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install pandas numpy yfinance scipy arch requests matplotlib python-dotenv scikit-learn streamlit TA-Lib
 python3 -c "import pandas; print('ok')"
+bubblewatch.log
+bubblewatch.err
+*.log
