@@ -16,3 +16,4 @@ python3 -c "import pandas; print('ok')"
 bubblewatch.log
 bubblewatch.err
 *.log
+bubble_state.json

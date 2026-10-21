@@ -1,5 +1,11 @@
 import pandas as pd
 from twos10s30s import fetch_series   # or wherever fetch_series lives
+import requests
+import os
+from dotenv import load_dotenv
+here = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(here, ".env"))
+NTFY_KEY = os.getenv("NTFY_KEY")
 
 THRESHOLDS = {
     "10Y":        {"red": 5.0,  "amber": 4.75, "higher_worse": True},
@@ -183,6 +189,37 @@ def ai_credit_basket(y30):
     flag = flag_level(avg, red=5.0, amber=2.0, higher_is_worse=True)
     return avg, flag
 
+import json
+
+def save_flags(rows, path="bubble_state.json"):
+    state = {metric: flag for metric, value, flag in rows}
+    with open(path, "w") as f:
+        json.dump(state, f)
+
+def load_flags(path="bubble_state.json"):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}        # first run — no prior state
+
+def find_flips(old, new):
+    flips = []
+    for metric, new_flag in new.items():
+        old_flag = old.get(metric)              # None if metric is new
+        if old_flag != new_flag:
+            flips.append((metric, old_flag, new_flag))
+    return flips
+
+def notify_flips(flips):
+    lines = [f"{m}: {old}→{new}" for m, old, new in flips]
+    body = "\n".join(lines)
+    requests.post(
+        f"https://ntfy.sh/{NTFY_KEY}",
+        data=body.encode("utf-8"),
+        headers={"Title": "Bubble Watch - flips"},
+    )
+
 def main():
     rows = evaluate(all_values(), load_manual())
     n, flag, names = flag_clusters()
@@ -199,6 +236,13 @@ def main():
     rows.append(("ai credit", round(avg, 2), flag))
     rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
     show(rows)
+
+    old = load_flags()
+    new = {metric: flag for metric, value, flag in rows}
+    flips = find_flips(old, new)
+    if flips:
+        notify_flips(flips)
+    save_flags(rows)
     
     
 
