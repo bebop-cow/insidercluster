@@ -174,6 +174,15 @@ def flag_syndication():
     flag = "RED" if n >= 2 else "AMBER" if n >= 1 else "GREEN"
     return n, flag
 
+def ai_credit_basket(y30):
+    bonds = latest_pairs()
+    spreads = [b["yield"] - y30 for b in bonds if b["bond_type"] == "unsecured"]
+    if not spreads:
+        return None
+    avg = sum(spreads) / len(spreads)
+    flag = flag_level(avg, red=5.0, amber=2.0, higher_is_worse=True)
+    return avg, flag
+
 def main():
     rows = evaluate(all_values(), load_manual())
     n, flag, names = flag_clusters()
@@ -182,11 +191,13 @@ def main():
         print(f" insider cluster: {', '.join(names)}")
     now, flag = flag_custody()
     rows.append(("foreign_custody", round(now/1000, 0), flag))   # /1000 to show in billions
-    rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
     y30 = get_auto()["30Y"]
     rows.extend(credit_rows(y30))        # extend, not append — it's a list of rows
     n, flag = flag_syndication()
     rows.append(("syndication", n, flag))
+    avg, flag = ai_credit_basket(y30)
+    rows.append(("ai credit", round(avg, 2), flag))
+    rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
     show(rows)
     
     
