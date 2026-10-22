@@ -17,3 +17,6 @@ bubblewatch.log
 bubblewatch.err
 *.log
 bubble_state.json
+bubble_state.json
+bubblepanel.log
+bubblepanel.err
