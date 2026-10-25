@@ -220,6 +220,16 @@ def notify_flips(flips):
         headers={"Title": "Bubble Watch - flips"},
     )
 
+def secured_gap(ticker):
+    bonds = latest_pairs()
+    sec = next((b["yield"] for b in bonds if b["ticker"]==ticker and b["bond_type"]=="secured"), None)
+    uns = next((b["yield"] for b in bonds if b["ticker"]==ticker and b["bond_type"]=="unsecured"), None)
+    if sec is None or uns is None:
+        return None                         # need both to compute a gap
+    gap = uns - sec
+    flag = flag_level(gap, red=8.0, amber=4.0, higher_is_worse=True)
+    return gap, flag
+
 def main():
     rows = evaluate(all_values(), load_manual())
     n, flag, names = flag_clusters()
@@ -243,6 +253,12 @@ def main():
     if flips:
         notify_flips(flips)
     save_flags(rows)
+
+    for tk in set(b["ticker"] for b in latest_pairs()):
+        result = secured_gap(tk)
+        if result:
+            gap, flag = result
+            rows.append((f"{tk}_sec_gap", round(gap, 2), flag))
     
     
 
