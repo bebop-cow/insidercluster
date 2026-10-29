@@ -1,9 +1,11 @@
-import yfinance as yfinance
+import yfinance as yf
 tk = yf.Ticker(ticker)
 
 for expiry in tk.options:
 	chain = tk.option_chain(expiry)
 	calls = chain.calls
 	puts = chain.puts
-	cnear = calls[abs(calls["lastPrice"] - target) <= 25]
-	pnear = puts[abs(puts["lastPrice"] - target) <= 25]
+	calls["mid"] = (calls["bid"] + calls["ask"]) / 2
+	cnear = calls[abs(calls["mid"] - target) <= 25]
+	puts["mid"] = (puts["bid"] + puts["ask"]) / 2
+	pnear = puts[abs(puts["mid"] - target) <= 25]
