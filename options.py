@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 
 
-def pull_options(ticker, target, window =0.5):
+def pull_options(ticker, target, window =25):
 	tk = yf.Ticker(ticker)
 	cutoff = pd.Timestamp.now() + pd.Timedelta(days=21)
 	all_calls =[]
@@ -30,7 +30,28 @@ def pull_options(ticker, target, window =0.5):
 	puts_df = pd.concat(all_puts) if all_puts else pd.DataFrame()
 
 	return calls_df, puts_df
+	
+def annual_vol(ticker, days=30):
+    closes = yf.Ticker(ticker).history(period="3mo")["Close"].dropna()
+    returns = closes.pct_change().dropna()
+    return returns.std() * (252 ** 0.5)      # annualized
 
-calls, puts = pull_options("AAPL", 1.0)
-print(calls[["strike", "mid", "expiry"]])
-print(puts[["strike", "mid", "expiry"]])
+def names(target, window=25):
+	tickers = ["AMD", "META", "NET", "TER","MDB","GOOGL","V", "AAPL", "AVGO" ,"TSLA"]
+	for tk in tickers:
+		vol = annual_vol(tk)
+		tickers.append({tk: vol})
+
+	all_results = []
+	for tk in tickers:
+		calls, puts = pull_options(tk, target, window)
+		calls["ticker"]= tk
+		puts["ticker"]= tk
+		all_results.append(calls)
+		all_results.append(puts)
+	return all_results
+
+
+calls, puts = pull_options("AAPL", 100)
+print(calls[["strike", "mid","contract","expiry"]])
+print(puts[["strike", "mid","contract", "expiry"]])
