@@ -237,14 +237,22 @@ def main():
     if names:
         print(f" insider cluster: {', '.join(names)}")
     now, flag = flag_custody()
-    rows.append(("foreign_custody", round(now/1000, 0), flag))   # /1000 to show in billions
+    rows.append(("foreign_custody", round(now/1000, 0), flag))
     y30 = get_auto()["30Y"]
-    rows.extend(credit_rows(y30))        # extend, not append — it's a list of rows
+    rows.extend(credit_rows(y30))
     n, flag = flag_syndication()
     rows.append(("syndication", n, flag))
     avg, flag = ai_credit_basket(y30)
     rows.append(("ai credit", round(avg, 2), flag))
-    rows.sort(key=lambda r: RANK[r[2]])      # re-sort with the new row
+
+    # secured/unsecured gap — BEFORE sort/show/flips
+    for tk in set(b["ticker"] for b in latest_pairs()):
+        result = secured_gap(tk)
+        if result:
+            gap, flag = result
+            rows.append((f"{tk}_sec_gap", round(gap, 2), flag))
+
+    rows.sort(key=lambda r: RANK[r[2]])
     show(rows)
 
     old = load_flags()
@@ -253,12 +261,6 @@ def main():
     if flips:
         notify_flips(flips)
     save_flags(rows)
-
-    for tk in set(b["ticker"] for b in latest_pairs()):
-        result = secured_gap(tk)
-        if result:
-            gap, flag = result
-            rows.append((f"{tk}_sec_gap", round(gap, 2), flag))
     
     
 
