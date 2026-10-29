@@ -30,7 +30,7 @@ def pull_options(ticker, target, window =25):
 	puts_df = pd.concat(all_puts) if all_puts else pd.DataFrame()
 
 	return calls_df, puts_df
-	
+
 def annual_vol(ticker, days=30):
     closes = yf.Ticker(ticker).history(period="3mo")["Close"].dropna()
     returns = closes.pct_change().dropna()
@@ -38,10 +38,7 @@ def annual_vol(ticker, days=30):
 
 def names(target, window=25):
 	tickers = ["AMD", "META", "NET", "TER","MDB","GOOGL","V", "AAPL", "AVGO" ,"TSLA"]
-	for tk in tickers:
-		vol = annual_vol(tk)
-		tickers.append({tk: vol})
-
+	ranked = sorted(tickers, key=lambda t: annual_vol(t), reverse=True)
 	all_results = []
 	for tk in tickers:
 		calls, puts = pull_options(tk, target, window)
@@ -52,6 +49,5 @@ def names(target, window=25):
 	return all_results
 
 
-calls, puts = pull_options("AAPL", 100)
-print(calls[["strike", "mid","contract","expiry"]])
-print(puts[["strike", "mid","contract", "expiry"]])
+results = names(100)
+print(pd.concat(results)[["ticker","strike","contract","expiry"]])
