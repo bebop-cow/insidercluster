@@ -39,6 +39,8 @@ def annual_vol(ticker, days=30):
 def names(target, window=25):
 	tickers = ["AMD", "META", "NET", "TER","MDB","GOOGL","V", "AAPL", "AVGO" ,"TSLA"]
 	ranked = sorted(tickers, key=lambda t: annual_vol(t), reverse=True)
+	for t in ranked:
+		print(t, round(annual_vol(t), 2))
 	all_results = []
 	for tk in tickers:
 		calls, puts = pull_options(tk, target, window)
