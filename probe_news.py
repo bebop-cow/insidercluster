@@ -24,9 +24,9 @@ Reply with ONLY the word YES or NO.
 
 Headline: {headline}
 Answer:"""
-    resp = ollama.chat(model="qwen2.5:3b", messages=[{"role":"user","content":prompt}])
+    resp = ollama.chat(model="qwen3.5:9b",think = False,  messages=[{"role":"user","content":prompt}])
     text = resp["message"]["content"].strip().upper()
-    return "YES" if "YES" in text else "NO"
+    return "YES" if "YES" in text == "YES" else "NO"
 
 WATCHLIST = ["Oracle","CoreWeave","Meta","Microsoft","Google","Amazon",
              "Nebius","Applied Digital","IREN","Nvidia"]
