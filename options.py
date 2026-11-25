@@ -37,7 +37,7 @@ def annual_vol(ticker, days=30):
     return returns.std() * (252 ** 0.5)      # annualized
 
 def names(target, window=25):
-	tickers = ["AMD", "META", "MU", "TER","DELL","ORCL"]
+	tickers = ["AMD", "META"]
 	ranked = sorted(tickers, key=lambda t: annual_vol(t), reverse=True)
 	for t in ranked:
 		print(t, round(annual_vol(t), 2))
